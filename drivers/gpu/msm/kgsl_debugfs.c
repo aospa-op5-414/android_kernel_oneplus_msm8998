@@ -168,7 +168,8 @@ static int print_mem_entry(void *data, void *ptr)
 			(unsigned long *) m->useraddr,
 			m->size, entry->id, flags,
 			memtype_str(usermem_type),
-			usage, (m->sgt ? m->sgt->nents : 0), m->mapsize,
+			usage, (m->sgt ? m->sgt->nents : 0),
+			(u64)atomic64_read(&m->mapsize),
 			egl_surface_count, egl_image_count);
 
 	if (entry->metadata[0] != 0)
