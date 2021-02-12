@@ -1,14 +1,5 @@
-/* Copyright (c) 2013-2018, 2020, The Linux Foundation. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 and
- * only version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
+// SPDX-License-Identifier: GPL-2.0-only
+/* Copyright (c) 2013-2018, 2020-2021, The Linux Foundation. All rights reserved. */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -59,8 +50,11 @@ int mdss_dsi_check_panel_status(struct mdss_dsi_ctrl_pdata *ctrl, void *arg)
 	 * then no need to fail this function,
 	 * instead return a positive value.
 	 */
-	if (ctrl->check_status)
+	if (ctrl->check_status) {
+		mutex_lock(&mfd->sd_lock);
 		ret = ctrl->check_status(ctrl);
+		mutex_unlock(&mfd->sd_lock);
+	}
 	else
 		ret = 1;
 	mutex_unlock(&ctl->offlock);

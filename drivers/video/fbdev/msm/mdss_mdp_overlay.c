@@ -1,15 +1,5 @@
-/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 and
- * only version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- */
+// SPDX-License-Identifier: GPL-2.0-only
+/* Copyright (c) 2012-2021, The Linux Foundation. All rights reserved. */
 
 #define pr_fmt(fmt)	"%s: " fmt, __func__
 
@@ -2428,6 +2418,7 @@ static int __overlay_secure_ctrl(struct msm_fb_data_type *mfd)
 	if (mdp5_data->secure_transition_state == SECURE_TRANSITION_NONE)
 		return ret;
 
+	mutex_lock(&mfd->sd_lock);
 	/* Secure Display */
 	if (mdp5_data->secure_transition_state == SD_NON_SECURE_TO_SECURE) {
 		if (!mdss_get_sd_client_cnt()) {
@@ -2455,7 +2446,8 @@ static int __overlay_secure_ctrl(struct msm_fb_data_type *mfd)
 			ret = mdss_mdp_secure_session_ctrl(1,
 					MDP_SECURE_DISPLAY_OVERLAY_SESSION);
 			if (ret) {
-				pr_err("secure display enable fail:%d", ret);
+				pr_err("secure display enable fail:%d\n", ret);
+				mutex_unlock(&mfd->sd_lock);
 				return ret;
 			}
 		}
@@ -2472,6 +2464,7 @@ static int __overlay_secure_ctrl(struct msm_fb_data_type *mfd)
 					MDP_SECURE_DISPLAY_OVERLAY_SESSION);
 			if (ret) {
 				pr_err("secure display disable fail:%d\n", ret);
+				mutex_unlock(&mfd->sd_lock);
 				return ret;
 			}
 		}
@@ -2487,6 +2480,7 @@ static int __overlay_secure_ctrl(struct msm_fb_data_type *mfd)
 					MDP_SECURE_CAMERA_OVERLAY_SESSION);
 			if (ret) {
 				pr_err("secure camera enable fail:%d\n", ret);
+				mutex_unlock(&mfd->sd_lock);
 				return ret;
 			}
 		}
@@ -2503,6 +2497,7 @@ static int __overlay_secure_ctrl(struct msm_fb_data_type *mfd)
 					MDP_SECURE_CAMERA_OVERLAY_SESSION);
 			if (ret) {
 				pr_err("secure camera disable fail:%d\n", ret);
+				mutex_unlock(&mfd->sd_lock);
 				return ret;
 			}
 		}
@@ -2510,6 +2505,7 @@ static int __overlay_secure_ctrl(struct msm_fb_data_type *mfd)
 		mdp5_data->sc_enabled = 0;
 	}
 
+	mutex_unlock(&mfd->sd_lock);
 	MDSS_XLOG(ret);
 	return ret;
 }
