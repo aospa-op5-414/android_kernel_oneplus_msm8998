@@ -1,5 +1,6 @@
 #include <linux/cgroup.h>
 #include <linux/err.h>
+#include <linux/input.h>
 #include <linux/kernel.h>
 #include <linux/percpu.h>
 #include <linux/printk.h>
@@ -16,6 +17,12 @@ extern struct reciprocal_value schedtune_spc_rdiv;
 
 /* We hold schedtune boost in effect for at least this long */
 #define SCHEDTUNE_BOOST_HOLD_NS 50000000ULL
+
+/* Allow boosting to occur within this time frame from last input update */
+#define SCHEDTUNE_INPUT_NS (5000 * NSEC_PER_MSEC)
+
+/* Keep track of interactivity */
+DEFINE_LW_TIMEOUT(schedtune_interactive_lwt, SCHEDTUNE_INPUT_NS);
 
 /*
  * EAS scheduler tunables for task groups.
@@ -232,6 +239,8 @@ schedtune_cpu_update(int cpu, u64 now)
 	u64 boost_ts;
 	int idx;
 
+	schedtune_interactive(lock);
+
 	/* The root boost group is always active */
 	boost_max = bg->group[0].boost;
 	boost_ts = now;
@@ -257,6 +266,8 @@ schedtune_cpu_update(int cpu, u64 now)
 	boost_max = max(boost_max, 0);
 	bg->boost_max = boost_max;
 	bg->boost_ts = boost_ts;
+
+	schedtune_interactive(unlock);
 }
 
 static int
@@ -267,6 +278,8 @@ schedtune_boostgroup_update(int idx, int boost)
 	int old_boost;
 	int cpu;
 	u64 now;
+
+	schedtune_interactive(lock);
 
 	/* Update per CPU boost groups */
 	for_each_possible_cpu(cpu) {
@@ -303,6 +316,8 @@ schedtune_boostgroup_update(int idx, int boost)
 
 		trace_sched_tune_boostgroup_update(cpu, 0, bg->boost_max);
 	}
+
+	schedtune_interactive(unlock);
 
 	return 0;
 }
@@ -522,12 +537,17 @@ int schedtune_cpu_boost(int cpu)
 	struct boost_groups *bg;
 	u64 now;
 
+	if (schedtune_interactive(check))
+		return 0;
+
 	bg = &per_cpu(cpu_boost_groups, cpu);
 	now = sched_clock_cpu(cpu);
 
 	/* Check to see if we have a hold in effect */
-	if (schedtune_boost_timeout(now, bg->boost_ts))
+	if (schedtune_boost_timeout(now, bg->boost_ts)) {
 		schedtune_cpu_update(cpu, now);
+		schedtune_interactive(update);
+	}
 
 	return bg->boost_max;
 }
@@ -538,6 +558,9 @@ int schedtune_task_boost(struct task_struct *p)
 	int task_boost;
 
 	if (unlikely(!schedtune_initialized))
+		return 0;
+
+	if (schedtune_interactive(check))
 		return 0;
 
 	/* Get task boost value */
@@ -555,6 +578,9 @@ int schedtune_prefer_idle(struct task_struct *p)
 	int prefer_idle;
 
 	if (unlikely(!schedtune_initialized))
+		return 0;
+
+	if (schedtune_interactive(check))
 		return 0;
 
 	/* Get prefer_idle value */
@@ -676,6 +702,70 @@ static struct cftype files[] = {
 		.write_u64 = prefer_idle_write_wrapper,
 	},
 	{ }	/* terminate */
+};
+
+static void schedtune_interactive_event(struct input_handle *handle,
+		unsigned int type, unsigned int code, int value)
+{
+	schedtune_interactive(update_expires);
+}
+
+static int schedtune_interactive_connect(struct input_handler *handler,
+		struct input_dev *dev, const struct input_device_id *id)
+{
+	struct input_handle *handle;
+	int error;
+
+	handle = kzalloc(sizeof(struct input_handle), GFP_KERNEL);
+	if (!handle)
+		return -ENOMEM;
+
+	handle->dev = dev;
+	handle->handler = handler;
+	handle->name = "schedtune";
+
+	error = input_register_handle(handle);
+	if (error)
+		goto err2;
+
+	error = input_open_device(handle);
+	if (error)
+		goto err1;
+
+	return 0;
+err1:
+	input_unregister_handle(handle);
+err2:
+	kfree(handle);
+	return error;
+}
+
+static void schedtune_interactive_disconnect(struct input_handle *handle)
+{
+	input_close_device(handle);
+	input_unregister_handle(handle);
+	kfree(handle);
+}
+
+static const struct input_device_id schedtune_ids[] = {
+	/* Multi-touch touchscreen */
+	{
+		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
+			INPUT_DEVICE_ID_MATCH_ABSBIT,
+		.evbit = { BIT_MASK(EV_ABS) },
+		.absbit = { [BIT_WORD(ABS_MT_POSITION_X)] =
+			BIT_MASK(ABS_MT_POSITION_X) |
+			BIT_MASK(ABS_MT_POSITION_Y) }
+	},
+	{ }
+};
+
+static struct input_handler schedtune_interactive_handler = {
+	.event		   = schedtune_interactive_event,
+	.connect	   = schedtune_interactive_connect,
+	.disconnect	   = schedtune_interactive_disconnect,
+	.name		   = "schedtune_h",
+	.id_table	   = schedtune_ids,
 };
 
 static int
@@ -828,6 +918,8 @@ schedtune_init(void)
 {
 	schedtune_spc_rdiv = reciprocal_value(100);
 	schedtune_init_cgroups();
+	if (input_register_handler(&schedtune_interactive_handler))
+		pr_err("Failed to register schedtune interactive handler\n");
 	return 0;
 }
 postcore_initcall(schedtune_init);
