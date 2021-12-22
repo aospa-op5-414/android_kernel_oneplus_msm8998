@@ -997,10 +997,10 @@
 		qcom,cpulist =	<&CPU0 &CPU1 &CPU2 &CPU3>;
 		qcom,target-dev = <&memlat_cpu0>;
 		qcom,core-dev-table =
-			<  300000 1525 >,
-			<  499200 3143 >,
-			< 1113600 4173 >,
-			< 1881600 5859 >;
+			<  300000 MHZ_TO_MBPS( 200,  8) >,
+			<  499200 MHZ_TO_MBPS( 412,  8) >,
+			< 1113600 MHZ_TO_MBPS( 547,  8) >,
+			< 1881600 MHZ_TO_MBPS( 768,  8) >;
 	};
 
 	devfreq_memlat_4: qcom,arm-memlat-mon-4 {
@@ -1008,23 +1008,23 @@
 		qcom,cpulist =	<&CPU4 &CPU5 &CPU6 &CPU7>;
 		qcom,target-dev = <&memlat_cpu4>;
 		qcom,core-dev-table =
-			<  300000  1525 >,
-			<  480000  3143 >,
-			<  900000  4173 >,
-			< 1017000  7759 >,
-			< 1296000  9887 >,
-			< 1555000 11863 >,
-			< 1804000 13763 >;
+			<  300000 MHZ_TO_MBPS( 200,  8) >,
+			<  480000 MHZ_TO_MBPS( 412,  8) >,
+			<  900000 MHZ_TO_MBPS( 547,  8) >,
+			< 1017000 MHZ_TO_MBPS( 1017, 8) >,
+			< 1296000 MHZ_TO_MBPS( 1296, 8) >,
+			< 1555000 MHZ_TO_MBPS( 1555, 8) >,
+			< 1804000 MHZ_TO_MBPS( 1804, 8) >;
 	};
 
 	devfreq_cpufreq: devfreq-cpufreq {
 		mincpubw-cpufreq {
 			target-dev = <&mincpubw>;
 			cpu-to-dev-map-0 =
-				< 1881600 1525 >;
+				< 1881600 MHZ_TO_MBPS( 200,  8) >;
 			cpu-to-dev-map-4 =
-				< 2016000 1525 >,
-				< 2092800 5195 >;
+				< 2016000 MHZ_TO_MBPS( 200,  8) >,
+				< 2092800 MHZ_TO_MBPS( 681,  8) >;
 		};
 	};
 
