@@ -301,15 +301,15 @@
 		qcom,master-offset = <4096>;
 	};
 
-	rpm_code_ram: rpm-memory@778000 {
-		compatible = "qcom,rpm-code-ram";
+	rpm_data_ram: rpm-memory@778000 {
+		compatible = "qcom,rpm-data-ram";
 		reg = <0x778000 0x5000>;
 	};
 
 	qcom,system-stats {
 		compatible = "qcom,system-stats";
+		qcom,rpm-data-ram = <&rpm_data_ram>;
 		qcom,rpm-msg-ram = <&rpm_msg_ram>;
-		qcom,rpm-code-ram = <&rpm_code_ram>;
 		qcom,masters = "APSS", "MPSS", "ADSP", "SLPI", "TZ", "SPSS";
 	};
 };
