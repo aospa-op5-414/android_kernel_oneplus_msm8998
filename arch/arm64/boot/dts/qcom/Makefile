@@ -1,81 +1,9 @@
-ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
-# TRINKET - SOMC Seine
-dtbo-$(CONFIG_MACH_SONY_PDX201) += \
-        trinket-seine-pdx201_generic-overlay.dtbo
-
-trinket-seine-pdx201_generic-overlay.dtbo-base := trinket.dtb
-
-# SM8150 - SoMC Kumano
-dtbo-$(CONFIG_MACH_SONY_GRIFFIN) += \
-		sm8150-kumano-griffin_generic-overlay.dtbo
-dtbo-$(CONFIG_MACH_SONY_BAHAMUT) += \
-		sm8150-kumano-bahamut_generic-overlay.dtbo
-
-sm8150-kumano-griffin_generic-overlay.dtbo-base := sm8150.dtb sm8150-v2.dtb
-sm8150-kumano-bahamut_generic-overlay.dtbo-base := sm8150.dtb sm8150-v2.dtb
-
-
-# SDM845 - SoMC Tama
-dtbo-$(CONFIG_MACH_SONY_AKARI) += \
-		sdm845-tama-akari_generic-overlay.dtbo \
-		sdm845-v2-tama-akari_generic-overlay.dtbo \
-		sdm845-v2.1-tama-akari_generic-overlay.dtbo
-dtbo-$(CONFIG_MACH_SONY_AKATSUKI) += \
-		sdm845-tama-akatsuki_generic-overlay.dtbo \
-		sdm845-v2-tama-akatsuki_generic-overlay.dtbo \
-		sdm845-v2.1-tama-akatsuki_generic-overlay.dtbo
-dtbo-$(CONFIG_MACH_SONY_APOLLO) += \
-		sdm845-tama-apollo_generic-overlay.dtbo \
-		sdm845-v2-tama-apollo_generic-overlay.dtbo \
-		sdm845-v2.1-tama-apollo_generic-overlay.dtbo
-
-sdm845-tama-akari_generic-overlay.dtbo-base := sdm845.dtb
-sdm845-v2-tama-akari_generic-overlay.dtbo-base := sdm845-v2.dtb
-sdm845-v2.1-tama-akari_generic-overlay.dtbo-base := sdm845-v2.1.dtb
-
-sdm845-tama-akatsuki_generic-overlay.dtbo-base := sdm845.dtb
-sdm845-v2-tama-akatsuki_generic-overlay.dtbo-base := sdm845-v2.dtb
-sdm845-v2.1-tama-akatsuki_generic-overlay.dtbo-base := sdm845-v2.1.dtb
-
-sdm845-tama-apollo_generic-overlay.dtbo-base := sdm845.dtb
-sdm845-v2-tama-apollo_generic-overlay.dtbo-base := sdm845-v2.dtb
-sdm845-v2.1-tama-apollo_generic-overlay.dtbo-base := sdm845-v2.1.dtb
-endif
-
-# SDM660 - SDE
-dtb-$(CONFIG_MACH_SONY_PIONEER)		+= sdm630-nile-pioneer-sde.dtb
-dtb-$(CONFIG_MACH_SONY_DISCOVERY)	+= sdm630-nile-discovery-sde.dtb
-dtb-$(CONFIG_MACH_SONY_VOYAGER)		+= sdm630-nile-voyager-sde.dtb
-
-dtb-$(CONFIG_MACH_SONY_KIRIN)		+= sdm630-ganges-kirin-sde.dtb
-dtb-$(CONFIG_MACH_SONY_MERMAID)		+= sdm636-ganges-mermaid-sde.dtb
-
-# MSM8998 - SDE
-dtb-$(CONFIG_MACH_SONY_LILAC)		+= msm8998-v2-yoshino-lilac-sde_generic.dtb
-dtb-$(CONFIG_MACH_SONY_LILAC)		+= msm8998-v2.1-yoshino-lilac-sde_generic.dtb
-dtb-$(CONFIG_MACH_SONY_MAPLE)		+= msm8998-v2-yoshino-maple-sde_generic.dtb
-dtb-$(CONFIG_MACH_SONY_MAPLE)		+= msm8998-v2.1-yoshino-maple-sde_generic.dtb
+# MSM8998
 dtb-$(CONFIG_ARCH_MSM8998) += cheeseburger-v2.1-pvt.dtb
 dtb-$(CONFIG_ARCH_MSM8998) += dumpling-v2.1-dvt.dtb
 dtb-$(CONFIG_ARCH_MSM8998) += dumpling-v2.1-pvt.dtb
 dtb-$(CONFIG_ARCH_MSM8998) += dumpling-v2.1-Second_Resource.dtb
 dtb-$(CONFIG_ARCH_MSM8998) += dumpling-v2.1-backup.dtb
-
-# MSM8996 - SDE
-dtb-$(CONFIG_MACH_SONY_DORA)		+= msm8996-v3.0-pmi8996-tone-dora-sde_generic.dtb
-dtb-$(CONFIG_MACH_SONY_DORA)		+= msm8996-v3-pmi8996-tone-dora-sde_generic.dtb
-dtb-$(CONFIG_MACH_SONY_KAGURA)		+= msm8996-v3.0-pmi8996-tone-kagura-sde_generic.dtb
-dtb-$(CONFIG_MACH_SONY_KAGURA)		+= msm8996-v3-pmi8996-tone-kagura-sde_generic.dtb
-dtb-$(CONFIG_MACH_SONY_KEYAKI)		+= msm8996-v3.0-pmi8996-tone-keyaki-sde_generic.dtb
-dtb-$(CONFIG_MACH_SONY_KEYAKI)		+= msm8996-v3-pmi8996-tone-keyaki-sde_generic.dtb
-
-# MSM8956 - FB
-dtb-$(CONFIG_MACH_SONY_SUZU)            += msm8956-v1.1-loire-suzu_generic.dtb
-dtb-$(CONFIG_MACH_SONY_KUGO)            += msm8956-v1.1-loire-kugo_generic.dtb
-dtb-$(CONFIG_MACH_SONY_BLANC)		+= msm8956-v1.1-loire-blanc_generic.dtb
-dtb-$(CONFIG_MACH_SONY_BLANC)		+= apq8056-v1.1-loire-blanc_windy.dtb
-dtb-$(CONFIG_MACH_SONY_BLANC)           += msm8956-loire-blanc_generic.dtb
-dtb-$(CONFIG_MACH_SONY_BLANC)		+= apq8056-loire-blanc_windy.dtb
 
 ifeq ($(CONFIG_BUILD_QCOM_REFERENCE_PLATFORMS),y)
 # SPDX-License-Identifier: GPL-2.0
