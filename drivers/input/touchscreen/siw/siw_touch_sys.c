@@ -195,14 +195,6 @@ int siw_touch_sys_osc(struct device *dev, int onoff)
 	return 0;
 }
 
-#if defined(__SIW_CONFIG_USER_FB)
-#if defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
-#include <linux/drm_notify.h>
-
-#define __SIW_SUPPORT_DRM_TYPE_1
-#endif	/* CONFIG_DRM_SDE_SPECIFIC_PANEL */
-#endif	/* __SIW_CONFIG_USER_FB */
-
 #if defined(__SIW_SUPPORT_DRM_TYPE_1)
 static int drm_notifier_callback(
 			struct notifier_block *self,

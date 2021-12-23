@@ -1330,7 +1330,6 @@ config TOUCHSCREEN_SYNAPTICS_S3320_I2C_RMI
           If unsure, say N.
 
 source "drivers/input/touchscreen/synaptics_dsx/Kconfig"
-source "drivers/input/touchscreen/synaptics_dsx_td4322/Kconfig"
 source "drivers/input/touchscreen/synaptics_tcm/Kconfig"
 source "drivers/input/touchscreen/siw/Kconfig"
 source "drivers/input/touchscreen/nt36672a/Kconfig"

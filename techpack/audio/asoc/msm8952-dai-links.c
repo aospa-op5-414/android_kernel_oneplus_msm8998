@@ -316,7 +316,6 @@ static struct snd_soc_dai_link msm8952_tasha_be_dai[] = {
 		.ops = &msm8952_slimbus_be_ops,
 		.ignore_suspend = 1,
 	},
-#ifndef CONFIG_ARCH_SONY_LOIRE
 	{
 		.name = LPASS_BE_SLIMBUS_6_RX,
 		.stream_name = "Slimbus6 Playback",
@@ -333,7 +332,6 @@ static struct snd_soc_dai_link msm8952_tasha_be_dai[] = {
 		.ignore_pmdown_time = 1,
 		.ignore_suspend = 1,
 	},
-#endif
 };
 
 static struct snd_soc_dai_link msm8952_common_fe_dai[] = {

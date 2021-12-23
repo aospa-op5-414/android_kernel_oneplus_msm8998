@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright © 2016, STMicroelectronics International N.V.
+ * Copyright ï¿½ 2016, STMicroelectronics International N.V.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -1132,10 +1132,6 @@ VL53L0_Error VL53L0_set_measurement_timing_budget_micro_seconds(VL53L0_DEV Dev,
 	uint32_t PreRangeTimeoutMicroSeconds	= 0;
 	uint32_t cMinTimingBudgetMicroSeconds	= 20000;
 	uint32_t SubTimeout = 0;
-
-#ifdef CONFIG_INPUT_STMVL53L0_SOMC_PARAMS
-	cMinTimingBudgetMicroSeconds = 26000;
-#endif
 
 	LOG_FUNCTION_START("");
 

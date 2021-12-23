@@ -50,20 +50,6 @@
 #define SCM_DLOAD_MINIDUMP		0X20
 #define SCM_DLOAD_BOTHDUMPS	(SCM_DLOAD_MINIDUMP | SCM_DLOAD_FULLDUMP)
 
-#if defined(CONFIG_ARCH_SONY_LOIRE) || defined(CONFIG_ARCH_SONY_TONE)
- #define TARGET_SOMC_S1BOOT
-#endif
-#if defined(CONFIG_ARCH_SONY_YOSHINO) || defined(CONFIG_ARCH_SONY_NILE) || \
-    defined(CONFIG_ARCH_SONY_TAMA) || defined(CONFIG_ARCH_SONY_GANGES) || \
-    defined(CONFIG_ARCH_SONY_KUMANO) || defined(CONFIG_ARCH_SONY_SEINE)
- #define TARGET_SOMC_XBOOT
-#if defined(CONFIG_ARCH_SONY_NILE) || defined(CONFIG_ARCH_SONY_TAMA) || \
-    defined(CONFIG_ARCH_SONY_GANGES) || defined(CONFIG_ARCH_SONY_KUMANO) || \
-    defined(CONFIG_ARCH_SONY_SEINE)
- #define TARGET_SOMC_XBOOT_FEATURE_AB
-#endif
-#endif
-
 static int restart_mode;
 static void *restart_reason;
 static bool scm_pmic_arbiter_disable_supported;
@@ -315,22 +301,6 @@ static void msm_restart_prepare(const char *cmd)
 				(cmd != NULL && cmd[0] != '\0'));
 	}
 
-#if defined(TARGET_SOMC_XBOOT)
-	/* Force warm reset and allow device to
-	 * preserve memory on restart for kernel
-	 * panic or for bootloader and recovery
-	 * commands */
-	if (cmd != NULL) {
-		if ((!strncmp(cmd, "bootloader", 10)) ||
-		    (!strncmp(cmd, "recovery", 8)) || in_panic)
-			need_warm_reset = true;
-		else
-			need_warm_reset = false;
-	}
-#elif defined(TARGET_SOMC_S1BOOT)
-	need_warm_reset = true;
-#endif
-
 	if (force_warm_reboot)
 		pr_info("Forcing a warm reset of the system\n");
 
@@ -339,36 +309,15 @@ static void msm_restart_prepare(const char *cmd)
 	else
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_HARD_RESET);
 
-#if defined(TARGET_SOMC_XBOOT)
-	if (in_panic) {
-		qpnp_pon_system_pwr_off(PON_POWER_OFF_WARM_RESET);
-		__raw_writel(0xC0DEDEAD, restart_reason);
-		qpnp_pon_set_restart_reason(PON_RESTART_REASON_KERNEL_PANIC);
-		flush_cache_all();
-
-		return;
-	}
-#endif
-
 	if (cmd != NULL) {
 		if (!strncmp(cmd, "bootloader", 10)) {
 			qpnp_pon_set_restart_reason(
 				PON_RESTART_REASON_BOOTLOADER);
 			__raw_writel(0x77665500, restart_reason);
 		} else if (!strncmp(cmd, "recovery", 8)) {
-#if defined(TARGET_SOMC_XBOOT) && !defined(TARGET_SOMC_XBOOT_FEATURE_AB)
-			qpnp_pon_set_restart_reason(
-				PON_RESTART_REASON_OEM_F);
-			__raw_writel(0x6f656d46, restart_reason); //oem-F
-#elif defined(TARGET_SOMC_S1BOOT)
-			qpnp_pon_set_restart_reason(
-				PON_RESTART_REASON_RECOVERY);
-			__raw_writel(0x6f656d46, restart_reason); //oem-46
-#else
 			qpnp_pon_set_restart_reason(
 				PON_RESTART_REASON_RECOVERY);
 			__raw_writel(0x77665502, restart_reason);
-#endif
 		} else if (!strcmp(cmd, "rtc")) {
 			qpnp_pon_set_restart_reason(
 				PON_RESTART_REASON_RTC);
@@ -398,24 +347,12 @@ static void msm_restart_prepare(const char *cmd)
 		} else if (!strncmp(cmd, "edl", 3)) {
 			enable_emergency_dload_mode();
 		} else {
-#if defined(TARGET_SOMC_XBOOT) || defined(TARGET_SOMC_S1BOOT)
-			qpnp_pon_set_restart_reason(PON_RESTART_REASON_UNKNOWN);
-#else
 			qpnp_pon_set_restart_reason(PON_RESTART_REASON_REBOOT);
-#endif
 			__raw_writel(0x77665501, restart_reason);
 		}
 	} else {
-#if defined(TARGET_SOMC_XBOOT) || defined(TARGET_SOMC_S1BOOT)
-		qpnp_pon_set_restart_reason(PON_RESTART_REASON_UNKNOWN);
-		__raw_writel(0x77665501, restart_reason);
-#elif defined(TARGET_SOMC_S1BOOT)
-		qpnp_pon_set_restart_reason(PON_RESTART_REASON_UNKNOWN);
-		__raw_writel(0x776655AA, restart_reason);
-#else
  		qpnp_pon_set_restart_reason(PON_RESTART_REASON_REBOOT);
 		__raw_writel(0x776655AA, restart_reason);
-#endif
 	}
 
 	flush_cache_all();
@@ -481,10 +418,6 @@ static void do_msm_poweroff(void)
 	set_dload_mode(0);
 	scm_disable_sdi();
 	qpnp_pon_system_pwr_off(PON_POWER_OFF_SHUTDOWN);
-
-#ifdef TARGET_SOMC_XBOOT
-	qpnp_pon_set_restart_reason(PON_RESTART_REASON_NONE);
-#endif
 
 	halt_spmi_pmic_arbiter();
 	deassert_ps_hold();
@@ -762,14 +695,6 @@ skip_sysfs_create:
 						"qcom,force-warm-reboot");
 
 	qpnp_pon_system_pwr_off(PON_POWER_OFF_WARM_RESET);
-
-#ifdef TARGET_SOMC_XBOOT
-	__raw_writel(0xC0DEDEAD, restart_reason);
-	qpnp_pon_set_restart_reason(PON_RESTART_REASON_KERNEL_PANIC);
-#elif defined(TARGET_SOMC_S1BOOT)
-	__raw_writel(0x77665501, restart_reason);
-	qpnp_pon_set_restart_reason(PON_RESTART_REASON_UNKNOWN);
-#endif
 
 	return 0;
 

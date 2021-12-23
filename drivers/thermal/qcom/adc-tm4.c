@@ -792,16 +792,6 @@ static int adc_tm4_set_trip_temp(struct adc_tm_sensor *sensor,
 
 	btm_chan = sensor->btm_ch;
 
-#ifdef CONFIG_ARCH_SONY_YOSHINO
-	if (btm_chan == ADC_TM_Mn_ADC_CH_SEL_CTL(1) ||
-	    btm_chan == ADC_TM_Mn_ADC_CH_SEL_CTL(2)) {
-		/* Coming in DeciDegC, so let's scale it up */
-		/* TODO: Is that correct? This is to avoid creating one more
-		 *       table and one more function, which seems useless */
-		tm_config.high_thr_temp *= 100;
-		tm_config.low_thr_temp *= 100;
-	}
-#endif
 	adc_tm_scale_therm_voltage_100k(&tm_config, chip->data);
 
 	/* Cool temperature corresponds to high voltage threshold */

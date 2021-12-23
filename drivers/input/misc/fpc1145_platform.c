@@ -78,17 +78,12 @@
 
 static const char *const pctl_names[] = {
 	"fpc1145_reset_reset", "fpc1145_reset_active", "fpc1145_irq_active",
-#ifdef CONFIG_ARCH_SONY_LOIRE
-	"fpc1145_ldo_enable",  "fpc1145_ldo_disable",
-#endif
 };
 
 typedef enum {
 	VCC_SPI = 0,
-#ifndef CONFIG_ARCH_SONY_LOIRE
 	VDD_ANA,
 	VDD_IO,
-#endif
 	FPC_VREG_MAX,
 } fpc_rails_t;
 
@@ -102,10 +97,8 @@ struct vreg_config {
 
 static const struct vreg_config vreg_conf[] = {
 	{ "vcc_spi", 1800000UL, 1800000UL, 10, true },
-#ifndef CONFIG_ARCH_SONY_LOIRE
 	{ "vdd_ana", 1800000UL, 1800000UL, 6000, false },
 	{ "vdd_io", 1800000UL, 1800000UL, 6000, true },
-#endif
 };
 
 struct fpc1145_data {
@@ -116,9 +109,6 @@ struct fpc1145_data {
 	struct regulator *vreg[ARRAY_SIZE(vreg_conf)];
 
 	int irq_gpio;
-#ifdef CONFIG_ARCH_SONY_LOIRE
-	int ldo_gpio;
-#endif
 
 	int irq;
 	bool irq_fired;
@@ -269,9 +259,6 @@ static int device_prepare(struct fpc1145_data *fpc1145, bool enable)
 		if (rc)
 			goto exit;
 
-#ifdef CONFIG_ARCH_SONY_LOIRE
-		(void)select_pin_ctl(fpc1145, "fpc1145_ldo_enable");
-#else
 		rc = vreg_setup(fpc1145, VDD_IO, true);
 		if (rc)
 			goto exit_1;
@@ -279,7 +266,6 @@ static int device_prepare(struct fpc1145_data *fpc1145, bool enable)
 		rc = vreg_setup(fpc1145, VDD_ANA, true);
 		if (rc)
 			goto exit_2;
-#endif
 
 		usleep_range(PWR_ON_STEP_SLEEP,
 			     PWR_ON_STEP_SLEEP + PWR_ON_STEP_RANGE2);
@@ -295,14 +281,10 @@ static int device_prepare(struct fpc1145_data *fpc1145, bool enable)
 		usleep_range(PWR_ON_STEP_SLEEP,
 			     PWR_ON_STEP_SLEEP + PWR_ON_STEP_RANGE2);
 
-#ifdef CONFIG_ARCH_SONY_LOIRE
-		(void)select_pin_ctl(fpc1145, "fpc1145_ldo_disable");
-#else
 		(void)vreg_setup(fpc1145, VDD_ANA, false);
 	exit_2:
 		(void)vreg_setup(fpc1145, VDD_IO, false);
 	exit_1:
-#endif
 		(void)vreg_setup(fpc1145, VCC_SPI, false);
 	exit:
 		fpc1145->prepared = false;
@@ -415,11 +397,6 @@ static long fpc1145_device_ioctl(struct file *fp, unsigned int cmd,
 
 		rc = put_user(val, (int *)usr);
 		break;
-#ifdef CONFIG_ARCH_SONY_NILE
-	case FPC_IOCRHWTYPE:
-		rc = put_user((int)FP_HW_TYPE_FPC, (int *)usr);
-		break;
-#endif
 	default:
 		rc = -ENOIOCTLCMD;
 		dev_err(fpc1145->dev, "Unknown IOCTL 0x%x.\n", cmd);
@@ -562,9 +539,6 @@ static int fpc1145_probe(struct platform_device *pdev)
 	size_t i;
 	int irqf;
 	struct device_node *np = dev->of_node;
-#ifdef CONFIG_ARCH_SONY_NILE
-	int hw_type;
-#endif
 
 	struct fpc1145_data *fpc1145 =
 		devm_kzalloc(dev, sizeof(*fpc1145), GFP_KERNEL);
@@ -593,34 +567,10 @@ static int fpc1145_probe(struct platform_device *pdev)
 	if (rc)
 		goto exit;
 
-#ifdef CONFIG_ARCH_SONY_NILE
-	rc = vreg_setup(fpc1145, VDD_ANA, true);
-	if (rc)
-		goto exit;
-
-	hw_type = cei_fp_module_detect();
-
-	(void)vreg_setup(fpc1145, VDD_ANA, false);
-
-	if (hw_type != FP_HW_TYPE_FPC) {
-		dev_info(dev, "FPC sensor not found, bailing out\n");
-		rc = -ENODEV;
-		goto exit;
-	}
-
-	dev_info(dev, "Detected FPC sensor\n");
-#endif
-
 	rc = fpc1145_request_named_gpio(fpc1145, "fpc,gpio_irq",
 					&fpc1145->irq_gpio);
 	if (rc)
 		goto exit;
-#ifdef CONFIG_ARCH_SONY_LOIRE
-	rc = fpc1145_request_named_gpio(fpc1145, "fpc,gpio_ldo",
-					&fpc1145->ldo_gpio);
-	if (rc)
-		goto exit;
-#endif
 
 	fpc1145->fingerprint_pinctrl = devm_pinctrl_get(dev);
 	if (IS_ERR(fpc1145->fingerprint_pinctrl)) {
@@ -696,13 +646,9 @@ static int fpc1145_remove(struct platform_device *pdev)
 
 	device_init_wakeup(fpc1145->dev, false);
 	mutex_destroy(&fpc1145->lock);
-#ifdef CONFIG_ARCH_SONY_LOIRE
-	(void)vreg_setup(fpc1145, VCC_SPI, false);
-#else
 	(void)vreg_setup(fpc1145, VDD_IO, false);
 	(void)vreg_setup(fpc1145, VCC_SPI, false);
 	(void)vreg_setup(fpc1145, VDD_ANA, false);
-#endif
 
 	dev_info(&pdev->dev, "%s\n", __func__);
 	return 0;

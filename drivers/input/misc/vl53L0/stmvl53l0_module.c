@@ -430,10 +430,6 @@ struct stmvl53l0_api_fn_t *papi_func_tbl;
 #define HIGH_SPEED_FINAL_RANGE_PULSE_PERIOD		10
 
 
-#ifdef CONFIG_INPUT_STMVL53L0_SOMC_PARAMS
-#define CALIBRATION_FILE 1
-#endif
-
 #ifdef CALIBRATION_FILE
 FixPoint1616_t offset_calib;
 FixPoint1616_t xtalk_calib;

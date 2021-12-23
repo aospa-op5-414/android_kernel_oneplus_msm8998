@@ -84,15 +84,10 @@
 #define __SIW_CONFIG_OF
 #endif
 
-#ifndef SOMC_TOUCH_BRINGUP
 #if defined(CONFIG_HAS_EARLYSUSPEND)
 //#define __SIW_CONFIG_EARLYSUSPEND
 #elif defined(CONFIG_FB)
 #define __SIW_CONFIG_FB
-#endif
-#else
-#define __SIW_CONFIG_USER_FB
-#define __SIW_CONFIG_SYSTEM_PM
 #endif
 
 #if defined(CONFIG_TOUCHSCREEN_SIW_SW1828)

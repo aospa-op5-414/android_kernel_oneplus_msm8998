@@ -32,28 +32,10 @@
  * DOLLARS.
  */
 
-/* SOMC_TOUCH_BRINGUP start */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/input.h>
-#include <linux/delay.h>
-/* SOMC_TOUCH_BRINGUP end */
-
 #include <linux/crc32.h>
 #include <linux/firmware.h>
 
-/* SOMC_TOUCH_BRINGUP start */
-#include <linux/platform_device.h>
-#include <linux/input/synaptics_tcm.h>
-/* SOMC_TOUCH_BRINGUP end */
-
 #include "synaptics_tcm_core.h"
-
-#if defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
-#define POWER_LOCK_RETRY
-#include <linux/incell.h>
-#define POWER_LOCK_RETRY_NUM 6
-#endif
 
 #define STARTUP_REFLASH
 
@@ -2017,7 +1999,7 @@ exit:
 static void reflash_startup_work(struct work_struct *work)
 {
 	int retval;
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
+#if defined(CONFIG_FB)
 	unsigned int timeout;
 #endif
 #ifdef POWER_LOCK_RETRY
@@ -2026,7 +2008,7 @@ static void reflash_startup_work(struct work_struct *work)
 #endif
 	struct syna_tcm_hcd *tcm_hcd = reflash_hcd->tcm_hcd;
 
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
+#if defined(CONFIG_FB)
 	timeout = FB_READY_TIMEOUT_S * 1000 / FB_READY_WAIT_MS;
 
 	while (tcm_hcd->fb_ready != FB_READY_COUNT) {

@@ -48,10 +48,6 @@
 #include "siw_touch_sys.h"
 
 
-#if defined(SOMC_TOUCH_BRINGUP)
-#include <linux/incell.h>
-#endif
-
 #if !defined(__SIW_CONFIG_OF)
 //#pragma message("[SiW - Warning] No COFIG_OF")
 #endif
@@ -63,10 +59,6 @@ extern int siw_touch_add_sysfs(struct siw_ts *ts);
 extern void siw_touch_del_sysfs(struct siw_ts *ts);
 
 extern int siw_touch_parse_data(struct siw_ts *ts);
-
-#if defined(SOMC_TOUCH_BRINGUP)
-void siw_init_late_session_work(struct work_struct *work);
-#endif
 
 #if 0
 u32 t_pr_dbg_mask = DBG_NONE | DBG_INFO;
@@ -822,19 +814,6 @@ static void siw_touch_upgrade_work_func(struct work_struct *work)
 						struct siw_ts, upgrade_work);
 	struct device *dev = ts->dev;
 	int ret = 0;
-#if defined(SOMC_TOUCH_BRINGUP)
-	incell_pw_status pwr_status = { false, false };
-
-	if (incell_get_power_status(&pwr_status)) {
-		t_dev_err(ts->dev, "failed get power status\n");
-		return;
-	}
-
-	if (!pwr_status.display_power || !pwr_status.touch_power) {
-		t_dev_err(dev, "FW upgrade skipped: invalid power status\n");
-		return;
-	}
-#endif
 
 	t_dev_info(dev, "FW upgrade work func\n");
 
@@ -844,13 +823,7 @@ static void siw_touch_upgrade_work_func(struct work_struct *work)
 	mutex_lock(&ts->lock);
 	siw_touch_irq_control(dev, INTERRUPT_DISABLE);
 
-#if defined(SOMC_TOUCH_BRINGUP)
-	incell_power_lock_ctrl(INCELL_DISPLAY_POWER_LOCK, &pwr_status);
 	ret = siw_ops_upgrade(ts);
-	incell_power_lock_ctrl(INCELL_DISPLAY_POWER_UNLOCK, &pwr_status);
-#else
-	ret = siw_ops_upgrade(ts);
-#endif
 	mutex_unlock(&ts->lock);
 
 	/* init force_upgrade */
@@ -1283,10 +1256,6 @@ static int __used siw_touch_init_works(struct siw_ts *ts)
 	INIT_DELAYED_WORK(&ts->notify_work, siw_touch_atomic_notifer_work_func);
 	INIT_DELAYED_WORK(&ts->sys_reset_work, siw_touch_sys_reset_work_func);
 
-#if defined(SOMC_TOUCH_BRINGUP)
-	INIT_DELAYED_WORK(&ts->session.work, siw_init_late_session_work);
-#endif
-
 	return 0;
 }
 
@@ -1302,10 +1271,6 @@ static void __used siw_touch_free_works(struct siw_ts *ts)
 		cancel_delayed_work(&ts->fb_work);
 		cancel_delayed_work(&ts->upgrade_work);
 		cancel_delayed_work(&ts->init_work);
-
-#if defined(SOMC_TOUCH_BRINGUP)
-		cancel_delayed_work(&ts->session.work);
-#endif
 
 		destroy_workqueue(ts->wq);
 		ts->wq = NULL;
@@ -1822,10 +1787,6 @@ int siw_touch_init_late(struct siw_ts *ts, int value)
 	struct device *dev = ts->dev;
 	int ret = 0;
 
-#if defined(SOMC_TOUCH_BRINGUP)
-	ret = -EINVAL;
-#endif
-
 	if (!value) {
 		goto out;
 	}
@@ -1892,63 +1853,6 @@ void siw_mon_deregister(void)
 EXPORT_SYMBOL_GPL(siw_mon_deregister);
 
 #endif	/* CONFIG_TOUCHSCREEN_SIWMON */
-
-#if defined(SOMC_TOUCH_BRINGUP)
-
-#define SIW_RETRY_SESSION_COUNT 10
-
-void siw_init_late_session_work(struct work_struct *work)
-{
-	struct delayed_work *dwork = to_delayed_work(work);
-	struct siw_probe_session *session =
-		container_of(dwork, struct siw_probe_session, work);
-	struct siw_ts *ts = container_of(session, struct siw_ts, session);
-	int trigger = 0xA55A;
-	incell_pw_status status = { false, false };
-	int ret = 0;
-
-	if (ts->session.done)
-		goto out;
-
-	t_dev_info(ts->dev, "session_work ready\n");
-
-	if (incell_get_power_status(&status)) {
-		t_dev_err(ts->dev, "failed get power status\n");
-		goto init_fail;
-	}
-
-	if (status.display_power && status.touch_power) {
-		incell_power_lock_ctrl(INCELL_DISPLAY_POWER_LOCK, &status);
-		mutex_lock(&ts->lock);
-		ret = siw_touch_init_late(ts, trigger);
-		mutex_unlock(&ts->lock);
-		incell_power_lock_ctrl(INCELL_DISPLAY_POWER_UNLOCK, &status);
-
-		if (ret) {
-			t_dev_err(ts->dev, "stop session_work\n");
-			goto init_fail;
-		}
-
-		ts->session.done = true;
-		goto out;
-	}
-init_fail:
-	ts->session.retry++;
-	if (ts->session.retry > SIW_RETRY_SESSION_COUNT) {
-		t_dev_err(ts->dev, "stop session_work\n");
-		goto out;
-	}
-	t_dev_err(ts->dev, "display status=%s, touch status=%s "
-		"will retring late session...\n",
-		status.touch_power ? "enable" : "disable",
-		status.display_power ? "enable" : "disable");
-	schedule_delayed_work(&ts->session.work, 1 * HZ);
-
-out:
-	return;
-
-}
-#endif
 
 
 __siw_setup_u32("siw_pr_dbg_mask=", siw_setup_pr_dbg_mask, t_pr_dbg_mask);

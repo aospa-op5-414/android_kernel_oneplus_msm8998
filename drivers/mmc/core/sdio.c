@@ -1108,39 +1108,6 @@ out:
 	return err;
 }
 
-#ifdef CONFIG_MMC_SOMC_LOW_VOLTAGE
-static u32 mmc_select_low_voltage(struct mmc_host *host, u32 ocr)
-{
-	int bit;
-	u32 ocr_orig = ocr;
-#if defined(CONFIG_BCMDHD) || defined(CONFIG_BRCMFMAC)
-	u32 ocr_fake = 0x180;
-#endif
-
-	pr_debug("%s \n",__func__);
-
-	if ((host->ocr_avail == MMC_VDD_165_195) && mmc_host_uhs(host) &&
-		((ocr & host->ocr_avail) == 0)) {
-		/* Interpret non-standard IO_OP_COND */
-		bit = ffs(ocr) - 1;
-		ocr &= 3 << bit;
-		ocr = ocr >> 1;
-
-#if defined(CONFIG_BCMDHD) || defined(CONFIG_BRCMFMAC)
-		/* Always force a specific OCR. BCMDHD only. */
-		pr_debug("%s: forcing ocr to 0x%x instead of 0x%x",
-			 mmc_hostname(host), ocr_fake, ocr);
-		ocr = ocr_fake;
- #endif
-
-		/* Power cycle card to select lowest possible voltage */
-		mmc_power_cycle(host, ocr);
-	}
-
-	return ocr_orig;
-}
-#endif
-
 static int mmc_sdio_power_restore(struct mmc_host *host)
 {
 	int ret;
@@ -1173,9 +1140,6 @@ static int mmc_sdio_power_restore(struct mmc_host *host)
 	if (ret)
 		goto out;
 
-#ifdef CONFIG_MMC_SOMC_LOW_VOLTAGE
-	ocr = mmc_select_low_voltage(host, ocr);
-#endif
 	ret = mmc_sdio_init_card(host, host->card->ocr, host->card,
 				mmc_card_keep_power(host));
 	if (!ret && host->sdio_irqs)
@@ -1252,9 +1216,6 @@ int mmc_attach_sdio(struct mmc_host *host)
 	if (host->ocr_avail_sdio)
 		host->ocr_avail = host->ocr_avail_sdio;
 
-#ifdef CONFIG_MMC_SOMC_LOW_VOLTAGE
-	rocr = mmc_select_low_voltage(host, ocr);
-#else
 	rocr = mmc_select_voltage(host, ocr);
 
 	/*
@@ -1264,7 +1225,6 @@ int mmc_attach_sdio(struct mmc_host *host)
 		err = -EINVAL;
 		goto err;
 	}
-#endif // CONFIG_MMC_SOMC_LOW_VOLTAGE
 
 	/*
 	 * Detect and init the card.

@@ -211,14 +211,6 @@ config QPNP_POWER_ON_PANIC_ON_KPDPWR_RESIN
 	  If unsure, DEFINITELY say N.
 	  This option shall be used ONLY temporarily and ONLY FOR DEBUGGING.
 
-config PON_SOMC_ORG
-	bool "SoMC specific power on interface"
-	depends on INPUT_QPNP_POWER_ON
-	help
-	  This option enables SoMC specific power on interface.
-	  The implementation in this kernel is feature-reduced to support only
-	  the dvdd shutdown function.
-
 config INPUT_SPARCSPKR
 	tristate "SPARC Speaker support"
 	depends on PCI && SPARC64
@@ -944,14 +936,6 @@ config INPUT_STMVL53L0
 
 	 To compile this driver as a module, choose M here: the
 	 module will be called stmvl53l0.
-
-config INPUT_STMVL53L0_SOMC_PARAMS
-	bool "STM VL53L0 extensions and parameters from SoMC"
-	default y
-	depends on INPUT_STMVL53L0
-	help
-	  Say Y here if you want to enable extensional code and
-	  parameters from SoMC for the STM VL53L0.
 
 config SENSORS_STMVL53L0_USE_CCI
 	tristate "STM VL53L0 on MSM Camera CCI"

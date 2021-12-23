@@ -32,31 +32,11 @@
  * DOLLARS.
  */
 
-/* SOMC_TOUCH_BRINGUP start */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/input.h>
-#include <linux/delay.h>
-/* SOMC_TOUCH_BRINGUP end */
-
 #include <linux/gpio.h>
 #include <linux/kthread.h>
 #include <linux/interrupt.h>
 #include <linux/regulator/consumer.h>
 #include <uapi/linux/sched/types.h>
-
-/* SOMC_TOUCH_BRINGUP start */
-#include <linux/platform_device.h>
-#include <linux/input/synaptics_tcm.h>
-/* SOMC_TOUCH_BRINGUP end */
-
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-#include <linux/incell.h>
-#define SYN_RETRY_NUM 3
-#define SYN_LOCK_POWER_RETRY_NUM 20
-#define SYN_WAIT_BEFORE_POWER_MS 200
-#define SYN_WAIT_AFTER_POWER_MS 200
-#endif
 
 #include "synaptics_tcm_core.h"
 
@@ -533,38 +513,9 @@ static ssize_t syna_tcm_sysfs_watchdog_store(struct device *dev,
 	return count;
 }
 
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-static bool touchctrl_is_touch_powered(struct syna_tcm_hcd *tcm_hcd)
-{
-	incell_pw_status status = { false, false };
-	int rc;
-
-	rc = incell_get_power_status(&status);
-	if (rc)
-		LOGE(tcm_hcd->pdev->dev.parent,
-				"Failed to get power status\n");
-	else
-		LOGD(tcm_hcd->pdev->dev.parent,
-				"power status (touch %s, display %s)\n",
-				status.touch_power ? "ON" : "OFF",
-				status.display_power ? "ON" : "OFF");
-
-	return rc == 0 && status.touch_power;
-}
-#endif
-
 static int syna_tcm_set_dynamic_config_by_id(struct syna_tcm_hcd *tcm_hcd, enum dynamic_config_id id, unsigned int input)
 {
 	int retval = 0;
-
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-	if (!touchctrl_is_touch_powered(tcm_hcd)) {
-		LOGE(tcm_hcd->pdev->dev.parent,
-				"Touch no power, give up to set dynamic config by id\n");
-		retval = -EINVAL;
-		goto exit;
-	}
-#endif
 
 	if (tcm_hcd->packrat_number < R9_PACKRAT_NUMBER)
 		goto exit;
@@ -2882,15 +2833,6 @@ static int syna_tcm_reset(struct syna_tcm_hcd *tcm_hcd, bool hw, bool from_watch
 		tcm_hcd->update_watchdog(tcm_hcd, false);
 
 	if (hw) {
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-		int retry;
-		for (retry = 0; retry < SYN_RETRY_NUM; retry++) {
-			retval = incell_control_mode(INCELL_TOUCH_RESET, INCELL_FORCE);
-			LOGN(tcm_hcd->pdev->dev.parent, "HW RESET FROM WATCHDOG\n");
-			if (retval != INCELL_EBUSY)
-				break;
-		}
-#else
 		if (bdata->reset_gpio < 0) {
 			LOGE(tcm_hcd->pdev->dev.parent,
 					"Hardware reset unavailable\n");
@@ -2900,7 +2842,6 @@ static int syna_tcm_reset(struct syna_tcm_hcd *tcm_hcd, bool hw, bool from_watch
 		gpio_set_value(bdata->reset_gpio, bdata->reset_on_state);
 		msleep(bdata->reset_active_ms);
 		gpio_set_value(bdata->reset_gpio, !bdata->reset_on_state);
-#endif
 	} else {
 		retval = tcm_hcd->write_message(tcm_hcd,
 				CMD_RESET,
@@ -3152,7 +3093,7 @@ static int syna_tcm_resume(struct device *dev)
 				"Application firmware not running\n");
 		goto do_reset;
 	}
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
+#if defined(CONFIG_FB)
 	retval = tcm_hcd->sleep(tcm_hcd, false);
 	if (retval < 0) {
 		LOGE(tcm_hcd->pdev->dev.parent,
@@ -3222,7 +3163,7 @@ static int syna_tcm_suspend(struct device *dev)
 	}
 
 #ifndef WAKEUP_GESTURE
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
+#if defined(CONFIG_FB)
 	retval = tcm_hcd->sleep(tcm_hcd, true);
 	if (retval < 0) {
 		LOGE(tcm_hcd->pdev->dev.parent,
@@ -3262,7 +3203,7 @@ exit:
 	return retval;
 }
 
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
+#if defined(CONFIG_FB)
 static int syna_tcm_fb_notifier_cb(struct notifier_block *nb,
 		unsigned long action, void *data)
 {
@@ -3290,36 +3231,6 @@ static int syna_tcm_fb_notifier_cb(struct notifier_block *nb,
 	return 0;
 }
 #endif
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-static int syna_tcm_drm_notifier_cb(struct notifier_block *nb,
-		unsigned long action, void *data)
-{
-	int retval;
-	int *transition;
-	struct drm_ext_event *evdata = (struct drm_ext_event *)data;
-	struct syna_tcm_hcd *tcm_hcd =
-			container_of(nb, struct syna_tcm_hcd, drm_notifier);
-
-	retval = 0;
-
-	if (evdata && evdata->data && tcm_hcd) {
-		if (action == DRM_EXT_EVENT_BEFORE_BLANK) {
-			transition = evdata->data;
-			if (*transition == DRM_BLANK_POWERDOWN) {
-				retval = syna_tcm_suspend(&tcm_hcd->pdev->dev);
-			}
-		}
-		else if (action == DRM_EXT_EVENT_AFTER_BLANK) {
-			transition = evdata->data;
-			if (*transition == DRM_BLANK_UNBLANK) {
-				retval = syna_tcm_resume(&tcm_hcd->pdev->dev);
-			}
-		}
-	}
-
-	return 0;
-}
-#endif
 static int syna_tcm_probe(struct platform_device *pdev)
 {
 	int retval;
@@ -3327,18 +3238,6 @@ static int syna_tcm_probe(struct platform_device *pdev)
 	struct syna_tcm_hcd *tcm_hcd;
 	const struct syna_tcm_board_data *bdata;
 	const struct syna_tcm_hw_interface *hw_if;
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-	int retry;
-	incell_pw_status status = { false, false };
-
-	if (!incell_touch_is_compatible(INCELL_TOUCH_TYPE_TCM)) {
-		dev_notice(&pdev->dev,
-			"%s: Detected panel is not TCM,"
-			" returning ENODEV\n",
-			__func__);
-		return -ENODEV;
-	}
-#endif
 
 	hw_if = pdev->dev.platform_data;
 	if (!hw_if) {
@@ -3496,20 +3395,12 @@ static int syna_tcm_probe(struct platform_device *pdev)
 		}
 	}
 
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
+#if defined(CONFIG_FB)
 	tcm_hcd->fb_notifier.notifier_call = syna_tcm_fb_notifier_cb;
 	retval = fb_register_client(&tcm_hcd->fb_notifier);
 	if (retval < 0) {
 		LOGE(tcm_hcd->pdev->dev.parent,
 				"Failed to register FB notifier client\n");
-	}
-#endif
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-	tcm_hcd->drm_notifier.notifier_call = syna_tcm_drm_notifier_cb;
-	retval = drm_register_client(&tcm_hcd->drm_notifier);
-	if (retval < 0) {
-		LOGE(tcm_hcd->pdev->dev.parent,
-				"Failed to register DRM notifier client\n");
 	}
 #endif
 
@@ -3540,37 +3431,6 @@ static int syna_tcm_probe(struct platform_device *pdev)
 			create_singlethread_workqueue("syna_tcm_polling");
 	INIT_DELAYED_WORK(&tcm_hcd->polling_work, syna_tcm_polling_work);
 
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-	retval = incell_control_mode(INCELL_CONT_SPLASH_TOUCH_ENABLE, false);
-	if (retval)
-		LOGE(tcm_hcd->pdev->dev.parent, "%s failed to INCELL_CONT_SPLASH_TOUCH_ENABLE retval=%d\n", __func__, retval);
-
-	for (retry = 0; retry < SYN_LOCK_POWER_RETRY_NUM; retry++) {
-		if (touchctrl_is_touch_powered(tcm_hcd)) {
-
-			LOGD(tcm_hcd->pdev->dev.parent,	"Touch is Powered, try to lock power\n");
-
-			retval = incell_power_lock_ctrl(INCELL_DISPLAY_POWER_LOCK, &status);
-
-			if (retval == INCELL_OK || retval == INCELL_ALREADY_LOCKED) {
-				LOGD(tcm_hcd->pdev->dev.parent,
-					"Lock Power Ok\n");
-				break;
-			}
-			LOGD(tcm_hcd->pdev->dev.parent,	"Lock Power Failed\n");
-		} else {
-			LOGD(tcm_hcd->pdev->dev.parent,	"Touch No Power\n");
-		}
-		mdelay(SYN_WAIT_BEFORE_POWER_MS);
-	}
-	if (retry == SYN_LOCK_POWER_RETRY_NUM) {
-		LOGE(tcm_hcd->pdev->dev.parent,
-				"Fail to get/lock poewr for 10 times, give up probe\n");
-		goto err_touch_power;
-	}
-	mdelay(SYN_WAIT_AFTER_POWER_MS);
-#endif
-
 	retval = tcm_hcd->enable_irq(tcm_hcd, true, NULL);
 	if (retval < 0) {
 		LOGE(tcm_hcd->pdev->dev.parent,
@@ -3594,16 +3454,6 @@ static int syna_tcm_probe(struct platform_device *pdev)
 		tcm_hcd->update_watchdog(tcm_hcd, true);
 	}
 
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-	retval = incell_power_lock_ctrl(INCELL_DISPLAY_POWER_UNLOCK, &status);
-	if (retval != INCELL_OK && retval != INCELL_ALREADY_UNLOCKED) {
-		LOGE(tcm_hcd->pdev->dev.parent,
-					"Fail to unlock power\n");
-	}
-	LOGD(tcm_hcd->pdev->dev.parent,
-					"Unlock Power Ok\n");
-#endif
-
 	mod_pool.workqueue =
 			create_singlethread_workqueue("syna_tcm_module");
 	INIT_WORK(&mod_pool.work, syna_tcm_module_work);
@@ -3616,16 +3466,6 @@ static int syna_tcm_probe(struct platform_device *pdev)
 err_reset:
 #endif
 err_enable_irq:
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-err_touch_power:
-	retval = incell_power_lock_ctrl(INCELL_DISPLAY_POWER_UNLOCK, &status);
-	if (retval != INCELL_OK && retval != INCELL_ALREADY_UNLOCKED) {
-		LOGE(tcm_hcd->pdev->dev.parent,
-					"Fail to unlock power\n");
-	}
-	LOGD(tcm_hcd->pdev->dev.parent,
-					"Unlock Power Ok\n");
-#endif
 	cancel_delayed_work_sync(&tcm_hcd->polling_work);
 	flush_workqueue(tcm_hcd->polling_workqueue);
 	destroy_workqueue(tcm_hcd->polling_workqueue);
@@ -3643,11 +3483,8 @@ err_touch_power:
 	kthread_stop(tcm_hcd->notifier_thread);
 
 err_create_run_kthread:
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
+#if defined(CONFIG_FB)
 	fb_unregister_client(&tcm_hcd->fb_notifier);
-#endif
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-	drm_unregister_client(&tcm_hcd->drm_notifier);
 #endif
 
 err_sysfs_create_dynamic_config_file:
@@ -3751,11 +3588,8 @@ static int syna_tcm_remove(struct platform_device *pdev)
 
 	kthread_stop(tcm_hcd->notifier_thread);
 
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
+#if defined(CONFIG_FB)
 	fb_unregister_client(&tcm_hcd->fb_notifier);
-#endif
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-	drm_unregister_client(&tcm_hcd->drm_notifier);
 #endif
 
 	for (idx = 0; idx < ARRAY_SIZE(dynamic_config_attrs); idx++) {
@@ -3799,7 +3633,7 @@ static int syna_tcm_remove(struct platform_device *pdev)
 
 #ifdef CONFIG_PM
 static const struct dev_pm_ops syna_tcm_dev_pm_ops = {
-#if !defined(CONFIG_FB) && !defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
+#if !defined(CONFIG_FB)
 	.suspend = syna_tcm_suspend,
 	.resume = syna_tcm_resume,
 #endif

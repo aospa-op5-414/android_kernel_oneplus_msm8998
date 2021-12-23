@@ -2142,11 +2142,6 @@ struct sdhci_msm_pltfm_data *sdhci_msm_populate_pdata(struct device *dev,
 	msm_host->regs_restore.is_supported =
 		of_property_read_bool(np, "qcom,restore-after-cx-collapse");
 
-#if defined(CONFIG_WIFI_CONTROL_FUNC) || defined(CONFIG_BRCMFMAC)
-	if (of_get_property(np, "somc,use-for-wifi", NULL))
-		pdata->use_for_wifi = true;
-#endif
-
 	return pdata;
 out:
 	return NULL;
@@ -4566,10 +4561,6 @@ static void sdhci_set_default_hw_caps(struct sdhci_msm_host *msm_host,
 		msm_host->enhanced_strobe = true;
 	}
 
-#ifdef CONFIG_ARCH_SONY_LOIRE
-	msm_host->enhanced_strobe = false;
-#endif
-
 	/*
 	 * SDCC 5 controller with major version 1 and minor version 0x42,
 	 * 0x46 and 0x49 currently uses 14lpp tech DLL whose internal
@@ -4664,8 +4655,6 @@ static bool sdhci_msm_is_bootdevice(struct device *dev)
 	 */
 	return true;
 }
-
-extern void somc_wifi_mmc_host_register(struct mmc_host *host);
 
 static int sdhci_msm_probe(struct platform_device *pdev)
 {
@@ -5185,16 +5174,6 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 	pm_runtime_enable(&pdev->dev);
 	pm_runtime_set_autosuspend_delay(&pdev->dev, MSM_AUTOSUSPEND_DELAY_MS);
 	pm_runtime_use_autosuspend(&pdev->dev);
-
-#ifdef CONFIG_WIFI_CONTROL_FUNC
-	if (msm_host->pdata->use_for_wifi) {
-		msm_host->mmc->caps &= ~MMC_CAP_NEEDS_POLL;
-		msm_host->mmc->caps2 |= MMC_CAP2_NONSTANDARD_OCR;
-		msm_host->mmc->caps2 |= MMC_CAP2_NONSTANDARD_NONREMOVABLE;
-		msm_host->mmc->caps2 |= MMC_CAP2_CLK_SCALE;
-		somc_wifi_mmc_host_register(msm_host->mmc);
-	}
-#endif
 
 #ifdef CONFIG_BRCMFMAC
 	if (msm_host->pdata->use_for_wifi)

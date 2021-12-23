@@ -128,14 +128,9 @@ static struct wcd_mbhc_config wcd_mbhc_cfg = {
 	.key_code[6] = 0,
 	.key_code[7] = 0,
 	.linein_th = 5000,
-#ifdef CONFIG_ARCH_SONY_LOIRE
-	.anc_micbias = MIC_BIAS_3,
-	.enable_anc_mic_detect = true,
-#else
 	.mbhc_micbias = MIC_BIAS_2,
 	.anc_micbias = MIC_BIAS_2,
 	.enable_anc_mic_detect = false,
-#endif
 };
 
 static void *def_tasha_mbhc_cal(void)
@@ -150,11 +145,7 @@ static void *def_tasha_mbhc_cal(void)
 		return NULL;
 
 #define S(X, Y) ((WCD_MBHC_CAL_PLUG_TYPE_PTR(tasha_wcd_cal)->X) = (Y))
-#ifdef CONFIG_ARCH_SONY_LOIRE
-	S(v_hs_max, 1700);
-#else
 	S(v_hs_max, 1500);
-#endif
 #undef S
 #define S(X, Y) ((WCD_MBHC_CAL_BTN_DET_PTR(tasha_wcd_cal)->X) = (Y))
 	S(num_btn, WCD_MBHC_DEF_BUTTONS);
@@ -163,16 +154,6 @@ static void *def_tasha_mbhc_cal(void)
 	btn_cfg = WCD_MBHC_CAL_BTN_DET_PTR(tasha_wcd_cal);
 	btn_high = ((void *)&btn_cfg->_v_btn_low) +
 		(sizeof(btn_cfg->_v_btn_low[0]) * btn_cfg->num_btn);
-#ifdef CONFIG_ARCH_SONY_LOIRE
-	btn_high[0] = 75;
-	btn_high[1] = 137;
-	btn_high[2] = 237;
-	btn_high[3] = 500;
-	btn_high[4] = 500;
-	btn_high[5] = 500;
-	btn_high[6] = 500;
-	btn_high[7] = 500;
-#else
 	btn_high[0] = 75;
 	btn_high[1] = 150;
 	btn_high[2] = 237;
@@ -181,7 +162,6 @@ static void *def_tasha_mbhc_cal(void)
 	btn_high[5] = 450;
 	btn_high[6] = 450;
 	btn_high[7] = 450;
-#endif
 	return tasha_wcd_cal;
 }
 
@@ -473,73 +453,6 @@ static int msm_slim_1_tx_ch_put(struct snd_kcontrol *kcontrol,
 	pr_debug("%s: msm_slim_1_tx_ch = %d\n", __func__, msm_slim_1_tx_ch);
 	return 1;
 }
-
-#ifdef CONFIG_ARCH_SONY_LOIRE
-static int mi2s_tx_sample_rate_get(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	int sample_rate_val = 0;
-
-	switch (mi2s_tx_sample_rate) {
-	case SAMPLING_RATE_32KHZ:
-		sample_rate_val = 4;
-		break;
-
-	case SAMPLING_RATE_44P1KHZ:
-		sample_rate_val = 3;
-		break;
-
-	case SAMPLING_RATE_192KHZ:
-		sample_rate_val = 2;
-		break;
-
-	case SAMPLING_RATE_96KHZ:
-		sample_rate_val = 1;
-		break;
-
-	case SAMPLING_RATE_48KHZ:
-	default:
-		sample_rate_val = 0;
-		break;
-	}
-
-	ucontrol->value.integer.value[0] = sample_rate_val;
-	pr_debug("%s: slim0_rx_sample_rate = %d\n", __func__,
-				slim0_rx_sample_rate);
-
-	return 0;
-}
-
-static int mi2s_tx_sample_rate_put(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	pr_debug("%s: ucontrol value = %ld\n", __func__,
-			ucontrol->value.integer.value[0]);
-
-	switch (ucontrol->value.integer.value[0]) {
-	case 4:
-		mi2s_tx_sample_rate = SAMPLING_RATE_32KHZ;
-		break;
-	case 3:
-		mi2s_tx_sample_rate = SAMPLING_RATE_44P1KHZ;
-		break;
-	case 2:
-		mi2s_tx_sample_rate = SAMPLING_RATE_192KHZ;
-		break;
-	case 1:
-		mi2s_tx_sample_rate = SAMPLING_RATE_96KHZ;
-		break;
-	case 0:
-	default:
-		mi2s_tx_sample_rate = SAMPLING_RATE_48KHZ;
-	}
-
-	pr_debug("%s: slim0_rx_sample_rate = %d\n", __func__,
-			slim0_rx_sample_rate);
-
-	return 0;
-}
-#endif
 
 static int slim0_rx_sample_rate_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
@@ -1138,32 +1051,6 @@ static int msm_ear_enable_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-#ifdef CONFIG_ARCH_SONY_LOIRE
-static int msm8952_auxpcm_rate_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	ucontrol->value.integer.value[0] = msm8952_auxpcm_rate;
-	return 0;
-}
-
-static int msm8952_auxpcm_rate_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	switch (ucontrol->value.integer.value[0]) {
-	case 0:
-		msm8952_auxpcm_rate = SAMPLING_RATE_8KHZ;
-		break;
-	case 1:
-		msm8952_auxpcm_rate = SAMPLING_RATE_16KHZ;
-		break;
-	default:
-		msm8952_auxpcm_rate = SAMPLING_RATE_8KHZ;
-		break;
-	}
-	return 0;
-}
-#endif
-
 static const char *const spk_function[] = {"Off", "On"};
 static const char *const slim0_rx_ch_text[] = {"One", "Two"};
 static const char *const slim0_tx_ch_text[] = {"One", "Two", "Three", "Four",
@@ -1216,13 +1103,6 @@ static const struct soc_enum msm_btsco_enum[] = {
 	SOC_ENUM_SINGLE_EXT(2, btsco_rate_text),
 };
 
-#ifdef CONFIG_ARCH_SONY_LOIRE
-static const char *const auxpcm_rate_text[] = {"8000", "16000"};
-static const struct soc_enum msm8952_auxpcm_enum[] = {
-		SOC_ENUM_SINGLE_EXT(2, auxpcm_rate_text),
-};
-#endif
-
 static const struct snd_kcontrol_new msm_snd_controls[] = {
 	SOC_ENUM_EXT("Speaker Function", msm_snd_enum[0], msm8952_get_spk,
 			msm8952_set_spk),
@@ -1264,12 +1144,6 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 			msm_proxy_rx_ch_get, msm_proxy_rx_ch_put),
 	SOC_ENUM_EXT("MSM_Ear_Enable_States", msm_snd_enum[13],
 			msm_ear_enable_get, msm_ear_enable_put),
-#ifdef CONFIG_ARCH_SONY_LOIRE
-	SOC_ENUM_EXT("AUX PCM SampleRate", msm8952_auxpcm_enum[0],
-			msm8952_auxpcm_rate_get, msm8952_auxpcm_rate_put),
-	SOC_ENUM_EXT("MI2S_TX SampleRate", msm_snd_enum[11],
-			mi2s_tx_sample_rate_get, mi2s_tx_sample_rate_put),
-#endif
 };
 
 int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
@@ -2053,13 +1927,11 @@ int msm_sec_auxpcm_startup(struct snd_pcm_substream *substream)
 		val = val | 0x1;
 		iowrite32(val, pdata->vaddr_gpio_mux_quin_ctl);
 	}
-#ifndef CONFIG_MACH_SONY_BLANC
 	if (pdata->vaddr_gpio_mux_sec_pcm_ctl) {
 		val = ioread32(pdata->vaddr_gpio_mux_sec_pcm_ctl);
 		val = val | 0x1;
 		iowrite32(val, pdata->vaddr_gpio_mux_sec_pcm_ctl);
 	}
-#endif
 	atomic_inc(&pdata->clk_ref.sec_auxpcm_mi2s_clk_ref);
 
 	/* enable the gpio's used for the external AUXPCM interface */
@@ -2152,43 +2024,6 @@ int msm_quin_mi2s_snd_startup(struct snd_pcm_substream *substream)
 
 	pr_debug("%s(): substream = %s  stream = %d\n", __func__,
 				substream->name, substream->stream);
-#ifdef CONFIG_MACH_SONY_BLANC
-	if (pdata->vaddr_gpio_mux_mic_ctl) {
-		val = ioread32(pdata->vaddr_gpio_mux_mic_ctl);
-		pr_debug("%s:vaddr_gpio_mux_mic_ctl:read val 0x%x\n",
-				__func__, val);
-		val = 0x00000000;
-		iowrite32(val, pdata->vaddr_gpio_mux_mic_ctl);
-		pr_debug("%s:vaddr_gpio_mux_mic_ctl:write val 0x%x\n",
-				__func__, val);
-	} else {
-		return -EINVAL;
-	}
-
-	if (pdata->vaddr_gpio_mux_sec_pcm_ctl) {
-		val = ioread32(pdata->vaddr_gpio_mux_sec_pcm_ctl);
-		pr_debug("%s:vaddr_gpio_mux_sec_pcm_ctl:read val 0x%x\n",
-				__func__, val);
-		val = 0x00000000;
-		iowrite32(val, pdata->vaddr_gpio_mux_sec_pcm_ctl);
-		pr_debug("%s:vaddr_gpio_mux_sec_pcm_ctl:write val 0x%x\n",
-				__func__, val);
-	} else {
-		return -EINVAL;
-	}
-
-	if (pdata->vaddr_gpio_mux_quin_ext_ctl) {
-		val = ioread32(pdata->vaddr_gpio_mux_quin_ext_ctl);
-		pr_debug("%s:vaddr_gpio_mux_quin_ext_ctl:read val 0x%x\n",
-				__func__, val);
-		val = val | 0x00000001;
-		iowrite32(val, pdata->vaddr_gpio_mux_quin_ext_ctl);
-		pr_debug("%s:vaddr_gpio_mux_quin_ext_ctl:write val 0x%x\n",
-				__func__, val);
-	} else {
-		return -EINVAL;
-	}
-#endif
 	if (pdata->vaddr_gpio_mux_quin_ctl) {
 		val = ioread32(pdata->vaddr_gpio_mux_quin_ctl);
 		val = val | 0x00000001;
@@ -2212,11 +2047,7 @@ int msm_quin_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	}
 
 	if (atomic_inc_return(&pdata->clk_ref.quin_mi2s_clk_ref) == 1) {
-#ifdef CONFIG_MACH_SONY_BLANC
-		ret = snd_soc_dai_set_fmt(cpu_dai, SND_SOC_DAIFMT_CBS_CFM);
-#else
 		ret = snd_soc_dai_set_fmt(cpu_dai, SND_SOC_DAIFMT_CBS_CFS);
-#endif
 		if (ret < 0)
 			pr_debug("%s: set fmt cpu dai failed\n", __func__);
 	}
@@ -2311,29 +2142,6 @@ static int msm8952_mclk_event(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
-#ifdef CONFIG_ARCH_SONY_LOIRE
-static const struct snd_soc_dapm_widget loire_msm8952_dapm_widgets[] = {
-
-	SND_SOC_DAPM_SUPPLY_S("MCLK", -1,  SND_SOC_NOPM, 0, 0,
-	msm8952_mclk_event, SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_MIC("Handset Mic", NULL),
-	SND_SOC_DAPM_MIC("Headset Mic", NULL),
-	SND_SOC_DAPM_MIC("ANCRight Headset Mic", NULL),
-	SND_SOC_DAPM_MIC("ANCLeft Headset Mic", NULL),
-	SND_SOC_DAPM_MIC("AHC VSNS", NULL),
-	SND_SOC_DAPM_MIC("AHC ISNS", NULL),
-
-	SND_SOC_DAPM_MIC("Digital Mic0", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic1", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic2", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic3", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic4", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic5", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic6", NULL),
-};
-#endif
-
 static const struct snd_soc_dapm_widget msm8952_tasha_dapm_widgets[] = {
 
 	SND_SOC_DAPM_SUPPLY_S("MCLK", -1,  SND_SOC_NOPM, 0, 0,
@@ -2422,13 +2230,8 @@ int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	pdata->msm8952_codec_fn.get_afe_config_fn = tasha_get_afe_config;
 	pdata->msm8952_codec_fn.mbhc_hs_detect_exit =
 				tasha_mbhc_hs_detect_exit;
-#if defined(CONFIG_ARCH_SONY_LOIRE) && !defined(CONFIG_MACH_SONY_BLANC)
-	snd_soc_dapm_new_controls(dapm, loire_msm8952_dapm_widgets,
-				ARRAY_SIZE(loire_msm8952_dapm_widgets));
-#else
 	snd_soc_dapm_new_controls(dapm, msm8952_tasha_dapm_widgets,
 				ARRAY_SIZE(msm8952_tasha_dapm_widgets));
-#endif
 	snd_soc_dapm_add_routes(dapm, wcd9335_audio_paths,
 				ARRAY_SIZE(wcd9335_audio_paths));
 
@@ -2792,24 +2595,6 @@ static int msm8952_asoc_machine_probe(struct platform_device *pdev)
 		goto err;
 	}
 
-#ifdef CONFIG_MACH_SONY_BLANC
-	muxsel = platform_get_resource_byname(pdev, IORESOURCE_MEM,
-			"csr_gp_io_mux_quin_ext_ctl");
-	if (!muxsel) {
-		dev_dbg(&pdev->dev, "MUX EXT addr invalid for MI2S\n");
-		ret = -ENODEV;
-	} else {
-		pdata->vaddr_gpio_mux_quin_ext_ctl =
-			ioremap(muxsel->start, resource_size(muxsel));
-		if (pdata->vaddr_gpio_mux_quin_ext_ctl == NULL) {
-			pr_err("%s ioremap failure for mux quin ext ctl addr\n",
-					__func__);
-			ret = -ENOMEM;
-			goto err;
-		}
-	}
-#endif
-
 	muxsel = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 			"csr_gp_io_mux_quin_ctl");
 	if (!muxsel) {
@@ -2926,10 +2711,6 @@ err:
 		iounmap(pdata->vaddr_gpio_mux_mic_ctl);
 	if (pdata->vaddr_gpio_mux_pcm_ctl)
 		iounmap(pdata->vaddr_gpio_mux_pcm_ctl);
-#ifdef CONFIG_MACH_SONY_BLANC
-	if (pdata->vaddr_gpio_mux_quin_ext_ctl)
-		iounmap(pdata->vaddr_gpio_mux_quin_ext_ctl);
-#endif
 	if (pdata->vaddr_gpio_mux_quin_ctl)
 		iounmap(pdata->vaddr_gpio_mux_quin_ctl);
 
@@ -2954,10 +2735,6 @@ static int msm8952_asoc_machine_remove(struct platform_device *pdev)
 		iounmap(pdata->vaddr_gpio_mux_mic_ctl);
 	if (pdata->vaddr_gpio_mux_pcm_ctl)
 		iounmap(pdata->vaddr_gpio_mux_pcm_ctl);
-#ifdef CONFIG_MACH_SONY_BLANC
-	if (pdata->vaddr_gpio_mux_quin_ext_ctl)
-		iounmap(pdata->vaddr_gpio_mux_quin_ext_ctl);
-#endif
 	if (pdata->vaddr_gpio_mux_quin_ctl)
 		iounmap(pdata->vaddr_gpio_mux_quin_ctl);
 

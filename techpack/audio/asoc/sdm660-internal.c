@@ -1218,13 +1218,8 @@ static void *def_msm_int_wcd_mbhc_cal(void)
 	if (!msm_int_wcd_cal)
 		return NULL;
 
-#if defined(CONFIG_ARCH_SONY_NILE) || defined (CONFIG_ARCH_SONY_GANGES)
-#define S(X, Y) ((WCD_MBHC_CAL_PLUG_TYPE_PTR(msm_int_wcd_cal)->X) = (Y))
-	S(v_hs_max, 1600);
-#else
 #define S(X, Y) ((WCD_MBHC_CAL_PLUG_TYPE_PTR(msm_int_wcd_cal)->X) = (Y))
 	S(v_hs_max, 1500);
-#endif /* !CONFIG_ARCH_SONY_NILE */
 #undef S
 #define S(X, Y) ((WCD_MBHC_CAL_BTN_DET_PTR(msm_int_wcd_cal)->X) = (Y))
 	S(num_btn, WCD_MBHC_DEF_BUTTONS);
@@ -1257,11 +1252,6 @@ static void *def_msm_int_wcd_mbhc_cal(void)
 	btn_high[3] = 450;
 	btn_low[4] = 500;
 	btn_high[4] = 500;
-
-#if defined(CONFIG_ARCH_SONY_NILE) || defined (CONFIG_ARCH_SONY_GANGES)
-	btn_low[1] = 110;
-	btn_high[1] = 110;
-#endif
 
 	return msm_int_wcd_cal;
 }

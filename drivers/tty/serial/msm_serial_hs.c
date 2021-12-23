@@ -418,19 +418,8 @@ static void msm_hs_resource_unvote(struct msm_hs_port *msm_uport)
 		return;
 	}
 	atomic_dec(&msm_uport->resource_count);
-#ifdef CONFIG_MACH_SONY_BLANC
-	rc = atomic_read(&msm_uport->resource_count);
-	if (rc <= 0) {
-		pm_runtime_mark_last_busy(uport->dev);
-		pm_runtime_put_autosuspend(uport->dev);
-	} else {
-		MSM_HS_DBG("%s(): already suspended. clk_count=%d",
-				__func__, rc);
-	}
-#else
 	pm_runtime_mark_last_busy(uport->dev);
 	pm_runtime_put_autosuspend(uport->dev);
-#endif
 }
 
  /* Vote for resources before accessing them */
@@ -439,19 +428,7 @@ static void msm_hs_resource_vote(struct msm_hs_port *msm_uport)
 	int ret;
 	struct uart_port *uport = &(msm_uport->uport);
 
-#ifdef CONFIG_MACH_SONY_BLANC
-	ret = atomic_read(&msm_uport->resource_count);
-
-	if (ret <= 0)
-		ret = pm_runtime_get_sync(uport->dev);
-	else {
-		MSM_HS_DBG("%s(): Skip pm_runtime_get_sync(), clk_count=%d",
-				__func__, ret);
-		ret = 0;
-	}
-#else
 	ret = pm_runtime_get_sync(uport->dev);
-#endif
 
 	if (ret < 0 || msm_uport->pm_state != MSM_HS_PM_ACTIVE) {
 		MSM_HS_WARN("%s():%s runtime PM CB not invoked ret:%d st:%d\n",
@@ -2339,7 +2316,7 @@ void msm_hs_resource_off(struct msm_hs_port *msm_uport)
 		msm_hs_write(uport, UART_DM_DMEN, data);
 		sps_tx_disconnect(msm_uport);
 	}
-#if !defined(CONFIG_BT_MSM_SLEEP) && !defined(CONFIG_MACH_SONY_BLANC)
+#if !defined(CONFIG_BT_MSM_SLEEP)
 	if (!atomic_read(&msm_uport->client_req_state))
 		msm_hs_enable_flow_control(uport, false);
 #endif
