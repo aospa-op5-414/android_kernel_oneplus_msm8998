@@ -34,30 +34,6 @@
 #include <linux/qpnp/qpnp-revid.h>
 #include <linux/regulator/qpnp-labibb-regulator.h>
 
-#ifdef CONFIG_REGULATOR_QPNP_LABIBB_SOMC
-#include <linux/regulator/qpnp-labibb-regulator.h>
-#endif
-#ifdef CONFIG_SOMC_LCD_OCP_ENABLED
-#include <linux/interrupt.h>
-#include <linux/input/qpnp-power-on.h>
-#endif /* CONFIG_SOMC_LCD_OCP_ENABLED */
-
-/* Build barrier for SoMC legacy targets using LAB/IBB regulator */
-#ifdef CONFIG_REGULATOR_QPNP_LABIBB_SOMC
- #undef SOMC_LABIBB_LEGACY_TARGET
-
- #if defined(CONFIG_ARCH_SONY_LOIRE) || defined(CONFIG_ARCH_SONY_TONE) || \
-     defined(CONFIG_ARCH_SONY_NILE)  || defined(CONFIG_ARCH_SONY_YOSHINO)
-	#define SOMC_LABIBB_LEGACY_TARGET 1
- #endif
-#endif
-
-/* Enforce IBB current limit for new SoMC targets */
-#if defined(CONFIG_REGULATOR_QPNP_LABIBB_SOMC) && \
-    !defined(SOMC_LABIBB_LEGACY_TARGET)
-#define IBB_CURRENT_LIMIT_VALUE		16	/* 800mA */
-#endif
-
 #define QPNP_LABIBB_REGULATOR_DRIVER_NAME	"qcom,qpnp-labibb-regulator"
 
 #define REG_REVISION_2			0x01

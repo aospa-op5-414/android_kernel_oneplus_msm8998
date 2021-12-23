@@ -50,20 +50,6 @@
 #define SCM_DLOAD_MINIDUMP		0X20
 #define SCM_DLOAD_BOTHDUMPS	(SCM_DLOAD_MINIDUMP | SCM_DLOAD_FULLDUMP)
 
-#if defined(CONFIG_ARCH_SONY_LOIRE) || defined(CONFIG_ARCH_SONY_TONE)
- #define TARGET_SOMC_S1BOOT
-#endif
-#if defined(CONFIG_ARCH_SONY_YOSHINO) || defined(CONFIG_ARCH_SONY_NILE) || \
-    defined(CONFIG_ARCH_SONY_TAMA) || defined(CONFIG_ARCH_SONY_GANGES) || \
-    defined(CONFIG_ARCH_SONY_KUMANO) || defined(CONFIG_ARCH_SONY_SEINE)
- #define TARGET_SOMC_XBOOT
-#if defined(CONFIG_ARCH_SONY_NILE) || defined(CONFIG_ARCH_SONY_TAMA) || \
-    defined(CONFIG_ARCH_SONY_GANGES) || defined(CONFIG_ARCH_SONY_KUMANO) || \
-    defined(CONFIG_ARCH_SONY_SEINE)
- #define TARGET_SOMC_XBOOT_FEATURE_AB
-#endif
-#endif
-
 static int restart_mode;
 static void *restart_reason;
 static bool scm_pmic_arbiter_disable_supported;

@@ -49,13 +49,6 @@
 #include "ufs-debugfs.h"
 #include "ufs-qcom.h"
 
-#if defined(CONFIG_ARCH_SONY_YOSHINO) || defined(CONFIG_ARCH_SONY_TAMA) || \
-    defined(CONFIG_ARCH_SONY_KUMANO)
- #ifndef UFS_TARGET_SONY_PLATFORM
-  #define UFS_TARGET_SONY_PLATFORM
- #endif
-#endif
-
 #ifdef CONFIG_DEBUG_FS
 
 static int ufshcd_tag_req_type(struct request *rq)

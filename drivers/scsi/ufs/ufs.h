@@ -40,13 +40,6 @@
 #include <linux/types.h>
 #include <scsi/ufs/ufs.h>
 
-#if defined(CONFIG_ARCH_SONY_YOSHINO) || defined(CONFIG_ARCH_SONY_TAMA) || \
-    defined(CONFIG_ARCH_SONY_KUMANO)
- #ifndef UFS_TARGET_SONY_PLATFORM
-  #define UFS_TARGET_SONY_PLATFORM
- #endif
-#endif
-
 #define MAX_CDB_SIZE	16
 #define GENERAL_UPIU_REQUEST_SIZE 32
 #define QUERY_DESC_MAX_SIZE       255
