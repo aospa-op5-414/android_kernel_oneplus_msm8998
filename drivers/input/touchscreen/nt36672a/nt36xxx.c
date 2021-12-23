@@ -36,10 +36,6 @@
 #include <linux/fb.h>
 #endif
 
-#ifdef CONFIG_DRM_MSM_DSI_SOMC_PANEL
-#include <linux/drm_notify.h>
-#endif
-
 #include "nt36xxx.h"
 
 #if NVT_TOUCH_EXT_PROC
@@ -59,9 +55,9 @@ static struct workqueue_struct *nvt_fwu_wq;
 extern void Boot_Update_Firmware(struct work_struct *work);
 #endif
 
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#if defined(CONFIG_FB)
 static int fb_notifier_callback(struct notifier_block *self, unsigned long event, void *data);
-#elif defined(CONFIG_FB) && defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#elif defined(CONFIG_DRM)
 static int drm_notifier_callback(struct notifier_block *self, unsigned long event, void *data);
 #endif
 
@@ -1585,7 +1581,7 @@ static int32_t nvt_ts_probe(struct i2c_client *client, const struct i2c_device_i
 	}
 #endif
 
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#if defined(CONFIG_FB)
 	ts->fb_notif.notifier_call = fb_notifier_callback;
 	ret = fb_register_client(&ts->fb_notif);
 	if(ret) {
@@ -1594,7 +1590,7 @@ static int32_t nvt_ts_probe(struct i2c_client *client, const struct i2c_device_i
 	} else {
 		pr_debug("register fb_notifier ok\n");
 	}
-#elif defined(CONFIG_FB) && defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#elif defined(CONFIG_DRM)
 	ts->fb_notif.notifier_call = drm_notifier_callback;
 	ret = drm_register_client(&ts->fb_notif);
 	if(ret) {
@@ -1687,10 +1683,10 @@ static int32_t nvt_ts_remove(struct i2c_client *client)
 {
 	//struct nvt_ts_data *ts = i2c_get_clientdata(client);
 
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#if defined(CONFIG_FB)
 	if (fb_unregister_client(&ts->fb_notif))
 		pr_err("Error occurred while unregistering fb_notifier.\n");
-#elif defined(CONFIG_FB) && defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#elif defined(CONFIG_DRM)
 	if (drm_unregister_client(&ts->fb_notif))
 		pr_err("Error occurred while unregistering DRM notifier.\n");
 #endif
@@ -1792,7 +1788,7 @@ static int32_t nvt_ts_resume(struct device *dev)
 	return 0;
 }
 
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#if defined(CONFIG_FB)
 static int fb_notifier_callback(struct notifier_block *self, unsigned long event, void *data)
 {
 	struct fb_event *evdata = data;
@@ -1814,7 +1810,7 @@ static int fb_notifier_callback(struct notifier_block *self, unsigned long event
 
 	return 0;
 }
-#elif defined(CONFIG_FB) && defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#elif defined(CONFIG_DRM)
 static int drm_notifier_callback(struct notifier_block *self, unsigned long event, void *data)
 {
 	struct drm_ext_event *evdata = data;

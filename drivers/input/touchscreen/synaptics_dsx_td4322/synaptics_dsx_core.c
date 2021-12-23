@@ -45,10 +45,6 @@
 #include <linux/input/mt.h>
 #endif
 
-#ifdef CONFIG_DRM_MSM_DSI_SOMC_PANEL
-#include <linux/drm_notify.h>
-#endif
-
 #define INPUT_PHYS_NAME "synaptics_dsx/touch_input"
 #define STYLUS_PHYS_NAME "synaptics_dsx/stylus"
 
@@ -127,10 +123,10 @@ static int synaptics_rmi4_reinit_device(struct synaptics_rmi4_data *rmi4_data);
 static int synaptics_rmi4_reset_device(struct synaptics_rmi4_data *rmi4_data,
 		bool rebuild);
 
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#if defined(CONFIG_FB)
 static int synaptics_rmi4_fb_notifier_cb(struct notifier_block *self,
 		unsigned long event, void *data);
-#elif defined(CONFIG_DRM) && defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#elif defined(CONFIG_DRM)
 static int synaptics_rmi4_drm_notifier_cb(struct notifier_block *self,
 		unsigned long event, void *data);
 #endif
@@ -4216,13 +4212,13 @@ static int synaptics_rmi4_probe(struct platform_device *pdev)
 		goto err_set_input_dev;
 	}
 
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#if defined(CONFIG_FB)
 	rmi4_data->fb_notifier.notifier_call = synaptics_rmi4_fb_notifier_cb;
 	retval = fb_register_client(&rmi4_data->fb_notifier);
 	if (retval < 0) {
 		TP_LOGE("Failed to register fb notifier client\n");
 	}
-#elif defined(CONFIG_DRM) && defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#elif defined(CONFIG_DRM)
 	rmi4_data->drm_notifier.notifier_call = synaptics_rmi4_drm_notifier_cb;
 	retval = drm_register_client(&rmi4_data->drm_notifier);
 	if (retval < 0) {
@@ -4330,7 +4326,7 @@ err_virtual_buttons:
 	synaptics_rmi4_irq_enable(rmi4_data, false, false);
 
 err_enable_irq:
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#if defined(CONFIG_FB)
 	fb_unregister_client(&rmi4_data->fb_notifier);
 #endif
 
@@ -4407,7 +4403,7 @@ static int synaptics_rmi4_remove(struct platform_device *pdev)
 
 	synaptics_rmi4_irq_enable(rmi4_data, false, false);
 
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#if defined(CONFIG_FB)
 	fb_unregister_client(&rmi4_data->fb_notifier);
 #endif
 
@@ -4538,7 +4534,7 @@ static void synaptics_rmi4_wakeup_gesture(struct synaptics_rmi4_data *rmi4_data,
 	return;
 }
 
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#if defined(CONFIG_FB)
 static int synaptics_rmi4_fb_notifier_cb(struct notifier_block *self,
 		unsigned long event, void *data)
 {
@@ -4568,7 +4564,7 @@ static int synaptics_rmi4_fb_notifier_cb(struct notifier_block *self,
 
 	return 0;
 }
-#elif defined(CONFIG_DRM) && defined(CONFIG_DRM_MSM_DSI_SOMC_PANEL)
+#elif defined(CONFIG_DRM)
 static int synaptics_rmi4_drm_notifier_cb(struct notifier_block *self,
 		unsigned long event, void *data)
 {

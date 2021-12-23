@@ -5369,14 +5369,6 @@ static int dsi_display_init(struct dsi_display *display)
 		goto end;
 	}
 
-#ifdef CONFIG_DRM_MSM_DSI_SOMC_PANEL
-	rc = somc_panel_init(display);
-	if (rc) {
-		pr_err("somc_panel init failed, rc=%d\n", rc);
-		return rc;
-	}
-#endif
-
 	rc = component_add(&pdev->dev, &dsi_display_comp_ops);
 	if (rc)
 		pr_err("component add failed, rc=%d\n", rc);
