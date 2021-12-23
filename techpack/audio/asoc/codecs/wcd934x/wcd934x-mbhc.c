@@ -39,10 +39,6 @@
   #undef AUDIO_SONY_PLATFORM
 #endif
 
-#if defined(CONFIG_ARCH_SONY_TAMA) || defined(CONFIG_ARCH_SONY_KUMANO)
-  #define AUDIO_SONY_PLATFORM 1
-#endif
-
 #define TAVIL_ZDET_SUPPORTED          true
 /* Z value defined in milliohm */
 #define TAVIL_ZDET_VAL_32             32000

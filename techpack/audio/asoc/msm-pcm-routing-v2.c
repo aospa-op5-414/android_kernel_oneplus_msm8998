@@ -60,10 +60,6 @@
   #undef AUDIO_SONY_PLATFORM
 #endif
 
-#if defined(CONFIG_ARCH_SONY_KUMANO)
-  #define AUDIO_SONY_PLATFORM 1
-#endif
-
 
 static struct mutex routing_lock;
 

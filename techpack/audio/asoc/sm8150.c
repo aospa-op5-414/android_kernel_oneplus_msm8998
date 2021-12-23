@@ -4294,13 +4294,8 @@ static void *def_wcd_mbhc_cal(void)
 	if (!wcd_mbhc_cal)
 		return NULL;
 
-#ifdef CONFIG_ARCH_SONY_KUMANO
- #define VHSMAX 1700
- #define BTN_H1 137
-#else
- #define VHSMAX 1600
- #define BTN_H1 150
-#endif
+#define VHSMAX 1600
+#define BTN_H1 150
 
 #define S(X, Y) ((WCD_MBHC_CAL_PLUG_TYPE_PTR(wcd_mbhc_cal)->X) = (Y))
 	S(v_hs_max, VHSMAX);

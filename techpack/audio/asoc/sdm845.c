@@ -3921,13 +3921,8 @@ static void *def_tavil_mbhc_cal(void)
 	if (!tavil_wcd_cal)
 		return NULL;
 
-#ifdef CONFIG_ARCH_SONY_TAMA
- #define VHSMAX 1700
- #define BTN_H1 137
-#else
- #define VHSMAX 1600
- #define BTN_H1 150
-#endif
+#define VHSMAX 1600
+#define BTN_H1 150
 
 #define S(X, Y) ((WCD_MBHC_CAL_PLUG_TYPE_PTR(tavil_wcd_cal)->X) = (Y))
 	S(v_hs_max, VHSMAX);
