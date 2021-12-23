@@ -263,12 +263,8 @@ struct dsi_samsung_hbm {
 #define SHORT_WORKER_PASSIVE		false
 #define SHORT_IRQF_DISABLED		0x00000020
 
-#ifdef CONFIG_ARCH_SONY_SEINE
- #define SHORT_IRQF_FLAGS		(IRQF_ONESHOT | IRQF_TRIGGER_RISING)
-#else
- #define SHORT_IRQF_FLAGS		(SHORT_IRQF_DISABLED | IRQF_ONESHOT | \
-					 IRQF_TRIGGER_HIGH | IRQF_TRIGGER_RISING)
-#endif
+#define SHORT_IRQF_FLAGS		(SHORT_IRQF_DISABLED | IRQF_ONESHOT | \
+					IRQF_TRIGGER_HIGH | IRQF_TRIGGER_RISING)
 struct short_detection_ctrl {
 	struct delayed_work check_work;
 	int current_chatter_cnt;

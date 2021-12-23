@@ -50,10 +50,6 @@
 
 #undef AUDIO_SONY_PLATFORM
 
-#if defined(CONFIG_ARCH_SONY_SEINE)
- #define AUDIO_SONY_PLATFORM 1
-#endif
-
 #define __CHIPSET__ "SM6150 "
 #define MSM_DAILINK_NAME(name) (__CHIPSET__#name)
 
