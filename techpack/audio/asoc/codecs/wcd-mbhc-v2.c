@@ -991,11 +991,6 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 		case MBHC_PLUG_TYPE_ANC_HEADPHONE:
 			jack_type = SND_JACK_ANC_HEADPHONE;
 			break;
-#if defined(CONFIG_ARCH_SONY_LOIRE) || defined (CONFIG_ARCH_SONY_TONE)
-		case MBHC_PLUG_TYPE_STEREO_MICROPHONE:
-			jack_type = SND_JACK_STEREO_MICROPHONE;
-			break;
-#endif
 		default:
 			pr_info("%s: Invalid current plug: %d\n",
 				__func__, mbhc->current_plug);

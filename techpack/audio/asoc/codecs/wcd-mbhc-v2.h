@@ -233,9 +233,6 @@ enum wcd_mbhc_plug_type {
 	MBHC_PLUG_TYPE_HIGH_HPH,
 	MBHC_PLUG_TYPE_GND_MIC_SWAP,
 	MBHC_PLUG_TYPE_ANC_HEADPHONE,
-#if defined(CONFIG_ARCH_SONY_LOIRE) || defined(CONFIG_ARCH_SONY_TONE)
-	MBHC_PLUG_TYPE_STEREO_MICROPHONE,
-#endif
 };
 
 enum pa_dac_ack_flags {

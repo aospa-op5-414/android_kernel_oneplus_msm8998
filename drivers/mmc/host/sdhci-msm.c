@@ -4602,10 +4602,6 @@ static void sdhci_set_default_hw_caps(struct sdhci_msm_host *msm_host,
 			caps |= CORE_8_BIT_SUPPORT;
 	}
 
-#ifdef CONFIG_ARCH_SONY_LOIRE
-	msm_host->enhanced_strobe = false;
-#endif
-
 	/*
 	 * Enable one MID mode for SDCC5 (major 1) on 8916/8939 (minor 0x2e) and
 	 * on 8992 (minor 0x3e) as a workaround to reset for data stuck issue.
@@ -4633,10 +4629,6 @@ static void sdhci_set_default_hw_caps(struct sdhci_msm_host *msm_host,
 		msm_host->use_updated_dll_reset = true;
 		msm_host->enhanced_strobe = true;
 	}
-
-#ifdef CONFIG_ARCH_SONY_LOIRE
-	msm_host->enhanced_strobe = false;
-#endif
 
 	/*
 	 * SDCC 5 controller with major version 1 and minor version 0x42,
