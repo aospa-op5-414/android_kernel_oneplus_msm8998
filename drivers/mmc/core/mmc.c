@@ -431,13 +431,8 @@ static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
 
 		/* Sleep / awake timeout in 100ns units */
 		if (sa_shift > 0 && sa_shift <= 0x17) {
-#if defined(CONFIG_ARCH_SONY_NILE) || defined(CONFIG_ARCH_SONY_GANGES)
-			/* HACK: Set sa_timeout for bad CSD on SoMC Nile */
-			card->ext_csd.sa_timeout = 1 << 0x17;
-#else
 			card->ext_csd.sa_timeout =
 					1 << ext_csd[EXT_CSD_S_A_TIMEOUT];
-#endif
 		}
 		card->ext_csd.erase_group_def =
 			ext_csd[EXT_CSD_ERASE_GROUP_DEF];

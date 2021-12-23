@@ -415,11 +415,6 @@ static long fpc1145_device_ioctl(struct file *fp, unsigned int cmd,
 
 		rc = put_user(val, (int *)usr);
 		break;
-#ifdef CONFIG_ARCH_SONY_NILE
-	case FPC_IOCRHWTYPE:
-		rc = put_user((int)FP_HW_TYPE_FPC, (int *)usr);
-		break;
-#endif
 	default:
 		rc = -ENOIOCTLCMD;
 		dev_err(fpc1145->dev, "Unknown IOCTL 0x%x.\n", cmd);
@@ -562,9 +557,6 @@ static int fpc1145_probe(struct platform_device *pdev)
 	size_t i;
 	int irqf;
 	struct device_node *np = dev->of_node;
-#ifdef CONFIG_ARCH_SONY_NILE
-	int hw_type;
-#endif
 
 	struct fpc1145_data *fpc1145 =
 		devm_kzalloc(dev, sizeof(*fpc1145), GFP_KERNEL);
@@ -592,24 +584,6 @@ static int fpc1145_probe(struct platform_device *pdev)
 	rc = fpc1145_get_regulators(fpc1145);
 	if (rc)
 		goto exit;
-
-#ifdef CONFIG_ARCH_SONY_NILE
-	rc = vreg_setup(fpc1145, VDD_ANA, true);
-	if (rc)
-		goto exit;
-
-	hw_type = cei_fp_module_detect();
-
-	(void)vreg_setup(fpc1145, VDD_ANA, false);
-
-	if (hw_type != FP_HW_TYPE_FPC) {
-		dev_info(dev, "FPC sensor not found, bailing out\n");
-		rc = -ENODEV;
-		goto exit;
-	}
-
-	dev_info(dev, "Detected FPC sensor\n");
-#endif
 
 	rc = fpc1145_request_named_gpio(fpc1145, "fpc,gpio_irq",
 					&fpc1145->irq_gpio);
