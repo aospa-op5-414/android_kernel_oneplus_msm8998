@@ -24,9 +24,6 @@
 //#include <linux/sysdev.h>
 #include <linux/device.h>
 #include <linux/firmware.h>
-#if defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
-#include <linux/incell.h>
-#endif
 
 #define LGE_TOUCH_NAME	"lge_touch"
 #define MXT_DEVICE_NAME	"touch_dev"

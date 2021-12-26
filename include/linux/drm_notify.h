@@ -37,26 +37,5 @@ struct drm_ext_event {
 	void *data;
 };
 
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-extern int drm_register_client(struct notifier_block *nb);
-extern int drm_unregister_client(struct notifier_block *nb);
-extern int drm_notifier_call_chain(unsigned long val, void *v);
-#else
-static inline int drm_register_client(struct notifier_block *nb)
-{
-	return 0;
-}
-
-static inline int drm_unregister_client(struct notifier_block *nb)
-{
-	return 0;
-}
-
-static inline int drm_notifier_call_chain(unsigned long val, void *v)
-{
-	return 0;
-}
-#endif /* CONFIG_DRM_SDE_SPECIFIC_PANEL */
-
 #endif /* __DRM_NOTIFY_H__ */
 

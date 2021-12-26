@@ -46,9 +46,6 @@
 #include <linux/fb.h>
 #include <linux/notifier.h>
 #endif
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-#include <linux/drm_notify.h>
-#endif
 
 //#define RESET_ON_RESUME
 
@@ -420,11 +417,8 @@ struct syna_tcm_hcd {
 	struct delayed_work polling_work;
 	struct workqueue_struct *polling_workqueue;
 	struct task_struct *notifier_thread;
-#if defined(CONFIG_FB) && !defined(CONFIG_DRM_SDE_SPECIFIC_PANEL)
+#if defined(CONFIG_FB)
 	struct notifier_block fb_notifier;
-#endif
-#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
-	struct notifier_block drm_notifier;
 #endif
 #ifndef RESET_ON_RESUME
 	struct work_struct resume_work;
