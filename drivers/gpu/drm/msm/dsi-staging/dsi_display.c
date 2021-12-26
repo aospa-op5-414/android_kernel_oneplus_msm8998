@@ -55,7 +55,6 @@ static struct dsi_display_boot_param boot_displays[MAX_DSI_ACTIVE_DISPLAY] = {
 };
 
 static const struct of_device_id dsi_display_dt_match[] = {
-	{.compatible = "somc,dsi-display"},
 	{.compatible = "qcom,dsi-display"},
 	{}
 };
