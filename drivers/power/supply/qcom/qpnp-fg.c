@@ -5021,9 +5021,6 @@ done:
 		pr_err("failed to read ocv properties=%d\n", rc);
 		return rc;
 	}
-	somc_fg_set_aging_mode(chip,
-				chip->learning_data.learned_cc_uah,
-				chip->nom_cap_uah);
 
 	if (fg_batt_type)
 		chip->batt_type = fg_batt_type;
