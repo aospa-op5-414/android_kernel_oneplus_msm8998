@@ -54,10 +54,6 @@
 #ifdef CONFIG_ADUX1050_POLL
 #include <linux/kthread.h>
 #endif
-#define CONFIG_SOMC_EXTENSION
-#ifdef CONFIG_SOMC_EXTENSION
-#include <linux/switch.h>
-#endif
 #include <linux/stat.h>
 #include <linux/input/adux1050.h>
 /**
@@ -838,11 +834,6 @@ static int adux1050_hw_init(struct adux1050_chip *adux1050)
 	u16 value = 0;
 	s16 err = 0;
 
-#ifdef CONFIG_SOMC_EXTENSION
-	value = DISABLE_DEV_INT;
-	adux1050->write(adux1050->dev, INT_CTRL_REG, &value, DEF_WR);
-#endif
-
 	for (lcnt = 0; lcnt < (GLOBAL_REG_CNT + STG_CNF_CNT); lcnt++) {
 		addr = lcnt;
 		if (adux1050->reg[addr].wr_flag == ADUX1050_ENABLE) {
@@ -866,16 +857,9 @@ static int adux1050_hw_init(struct adux1050_chip *adux1050)
 						(value & ~ACTIVE_HIGH);
 				value = adux1050->int_ctrl | DISABLE_DEV_INT;
 			}
-#ifdef CONFIG_SOMC_EXTENSION
-			if (addr != INT_CTRL_REG) {
-				ADUX1050_DRIVER_DBG("Addr %x Val %x\n", addr, value);
-				err = adux1050->write(adux1050->dev, addr, &value, DEF_WR);
-			}
-#else
 			ADUX1050_DRIVER_DBG("Addr %x Val %x\n", addr, value);
 			err = adux1050->write(adux1050->dev, addr,
 					      &value, DEF_WR);
-#endif
 			if (err < DEF_WR) {
 				dev_err(adux1050->dev, "I2C WR Err %d in %s\n",
 					err, __FILE__);
@@ -981,10 +965,6 @@ static int adux1050_hw_init(struct adux1050_chip *adux1050)
 							TWICE_CONV_DELAY_TIME);
 	dev_info(adux1050->dev, " CONV TIME: %d\n",
 		 adux1050->slp_time_conv_complete);
-
-#ifdef CONFIG_SOMC_EXTENSION
-	adux1050_force_cal(adux1050, adux1050->slp_time_conv_complete);
-#endif
 
 	return 0;
 }
@@ -3544,89 +3524,6 @@ error:
 	return count;
 }
 
-#ifdef CONFIG_SOMC_EXTENSION
-static ssize_t show_hdmi_detect(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	struct adux1050_chip  *adux1050 = dev_get_drvdata(dev);
-
-	snprintf(buf, PAGE_SIZE, "%d\n", adux1050->hdmi_detect);
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static ssize_t store_hdmi_detect(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct adux1050_chip *adux1050 = dev_get_drvdata(dev);
-	int hdmi_det;
-
-	sscanf(buf, "%d", &hdmi_det);
-	if (hdmi_det > 0) {
-		adux1050->hdmi_detect = TRUE;
-	} else {
-		adux1050->hdmi_detect = FALSE;
-		switch_set_state(&adux1050->hdmi, 0);
-	}
-	input_event(adux1050->input, EV_KEY, KEY_SWITCHVIDEOMODE, 1);
-	input_sync(adux1050->input);
-	input_event(adux1050->input, EV_KEY, KEY_SWITCHVIDEOMODE, 0);
-	input_sync(adux1050->input);
-
-	dev_info(adux1050->dev, "HDMI detect [%d]", adux1050->hdmi_detect);
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static int adux1050_set_switch_device(struct adux1050_chip *adux1050)
-{
-	int error = 0;
-
-	adux1050->hdmi.name = "scl_hdmi_touchkey";
-	adux1050->hdmi.state = 0;
-	error = switch_dev_register(&adux1050->hdmi);
-	if (error)
-		dev_err(adux1050->dev, "ADUX1050 regist HDMI error(%d)\n", error);
-
-	return error;
-}
-
-static void adux1050_hdmi_switch_work(struct work_struct *switch_work)
-{
-	s16 err = 0;
-	struct adux1050_chip *adux1050 = NULL;
-	u16 int_status;
-	if (switch_work == NULL) {
-		pr_err("%s - _work is NULL\n", __func__);
-		return;
-	}
-	adux1050 = container_of((struct delayed_work *) switch_work,
-			struct adux1050_chip, hdmi_switch_work);
-
-	mutex_lock(&adux1050->mutex);
-	ADUX1050_DRIVER_DBG("%s -in delayed hdmi_switch_work\n", __func__);
-	err = adux1050->read(adux1050->dev, INT_STATUS_REG,
-			     &int_status, DEF_WR);
-	if (err < I2C_WRMSG_LEN)
-		dev_err(adux1050->dev, "I2C READ FAILED %d at %s", err, __func__);
-
-	if (int_status & (0x1 << adux1050->hdmi_switch_stg) && adux1050->hdmi_detect) {
-		if (!adux1050->hdmi.state) {
-			input_event(adux1050->input, EV_KEY, KEY_STOP, 1);
-			input_sync(adux1050->input);
-			input_event(adux1050->input, EV_KEY, KEY_STOP, 0);
-			input_sync(adux1050->input);
-			input_event(adux1050->input, EV_KEY, KEY_HOMEPAGE, 1);
-			input_sync(adux1050->input);
-			input_event(adux1050->input, EV_KEY, KEY_HOMEPAGE, 0);
-			input_sync(adux1050->input);
-		}
-
-		ADUX1050_DRIVER_DBG("hdmi switch: [%d] \n", adux1050->hdmi.state ^ 1);
-		switch_set_state(&adux1050->hdmi, adux1050->hdmi.state ^ 1);
-	}
-	mutex_unlock(&adux1050->mutex);
-}
-#endif
-
 /*
 The sysfs attributes used in the driver follows
 */
@@ -3678,10 +3575,6 @@ static DEVICE_ATTR(adux1050_proxy_enable, 0664, /* S_IWUGO | S_IRUGO */
 	       show_proxy_enable, store_proxy_enable);
 static DEVICE_ATTR(adux1050_proxy_time, 0664, /* S_IWUGO | S_IRUGO */
 	       show_proxy_time, store_proxy_time);
-#ifdef CONFIG_SOMC_EXTENSION
-static DEVICE_ATTR(hdmi_detect, 0664, /* S_IWUGO | S_IRUGO */
-	       show_hdmi_detect, store_hdmi_detect);
-#endif
 
 static struct attribute *adux1050_attrs[] = {
 	&dev_attr_adux1050_enable.attr,
@@ -3710,9 +3603,6 @@ static struct attribute *adux1050_attrs[] = {
 	&dev_attr_adux1050_intr_error.attr,
 	&dev_attr_adux1050_proxy_enable.attr,
 	&dev_attr_adux1050_proxy_time.attr,
-#ifdef CONFIG_SOMC_EXTENSION
-	&dev_attr_hdmi_detect.attr,
-#endif
 	NULL,
 };
 
@@ -3767,11 +3657,6 @@ static irqreturn_t adux1050_isr_thread(int irq, void *handle)
 	struct adux1050_chip *adux1050 = handle;
 	if (!work_pending(&adux1050->work)) {
 		schedule_work(&adux1050->work);
-#ifdef CONFIG_SOMC_EXTENSION
-		cancel_delayed_work_sync(&adux1050->hdmi_switch_work);
-		schedule_delayed_work(&adux1050->hdmi_switch_work,
-				msecs_to_jiffies(LONG_PRESS_TIME));
-#endif
 	} else {
 		mutex_lock(&adux1050->mutex);
 		/*Cleared the interrupt for future intterupts to occur*/
@@ -3876,22 +3761,6 @@ static inline void high_threshold_int_check(struct adux1050_chip *adux1050,
 					dev_dbg(adux1050->dev, "St = %de\n",
 						 stg_cnt);
 					if (adux1050->send_event) {
-#ifdef CONFIG_SOMC_EXTENSION
-						if (stg_cnt == adux1050->volume_down_stg) {
-							input_event(adux1050->input,
-									EV_KEY,
-									KEY_VOLUMEDOWN, 1);
-						} else if (stg_cnt == adux1050->volume_up_stg) {
-							input_event(adux1050->input,
-									EV_KEY,
-									KEY_VOLUMEUP, 1);
-						} else if (stg_cnt == adux1050->hdmi_switch_stg &&
-								adux1050->hdmi_detect) {
-							input_event(adux1050->input,
-									EV_KEY,
-									KEY_SWITCHVIDEOMODE, 1);
-						}
-#endif
 						indicate_active_state(adux1050,
 								      stg_cnt,
 								      TH_HIGH);
@@ -3900,22 +3769,6 @@ static inline void high_threshold_int_check(struct adux1050_chip *adux1050,
 					dev_dbg(adux1050->dev, "St = %dx\n",
 						 stg_cnt);
 					if (adux1050->send_event) {
-#ifdef CONFIG_SOMC_EXTENSION
-						if (stg_cnt == adux1050->volume_down_stg) {
-							input_event(adux1050->input,
-									EV_KEY,
-									KEY_VOLUMEDOWN, 0);
-						} else if (stg_cnt == adux1050->volume_up_stg) {
-							input_event(adux1050->input,
-									EV_KEY,
-									KEY_VOLUMEUP, 0);
-						} else if (stg_cnt == adux1050->hdmi_switch_stg &&
-								adux1050->hdmi_detect) {
-							input_event(adux1050->input,
-									EV_KEY,
-									KEY_SWITCHVIDEOMODE, 0);
-						}
-#endif
 						indicate_idle_state(adux1050,
 								    stg_cnt,
 								    TH_HIGH);
@@ -3952,11 +3805,6 @@ static inline void low_threshold_int_check(struct adux1050_chip *adux1050,
 					dev_dbg(adux1050->dev, "St = %de\n",
 						 stg_cnt);
 					if (adux1050->send_event) {
-#ifdef CONFIG_SOMC_EXTENSION
-						adux1050_force_cal(adux1050,
-								adux1050->slp_time_conv_complete);
-#endif
-
 						indicate_active_state(adux1050,
 								      stg_cnt,
 								      TH_LOW);
@@ -4303,9 +4151,6 @@ static int adux1050_probe(struct i2c_client *client,
 	struct device *dev = NULL;
 	struct adux1050_chip *adux1050 = NULL;
 	ADUX1050_DRIVER_DBG("%s called", __func__);
-#ifdef CONFIG_SOMC_EXTENSION
-	msleep(2);
-#endif
 
 	if ((client == NULL) || (&client->dev == NULL)) {
 		pr_err("%s: Client/client->dev doesn't exist\n", __func__);
@@ -4352,17 +4197,6 @@ static int adux1050_probe(struct i2c_client *client,
 				pr_info("%s Usg irq_flag from DT %d\n",
 					__func__, adux1050->pdata->irq_flags);
 			}
-#ifdef CONFIG_SOMC_EXTENSION
-			of_property_read_u32(adux1050->dt_device_node,
-					"somc,volume_up_stg", &adux1050->volume_up_stg);
-			of_property_read_u32(adux1050->dt_device_node,
-					"somc,volume_down_stg", &adux1050->volume_down_stg);
-			of_property_read_u32(adux1050->dt_device_node,
-					"somc,hdmi_switch_stg", &adux1050->hdmi_switch_stg);
-			pr_info("%s - volume_up_stg  : %d\n", __func__, adux1050->volume_up_stg);
-			pr_info("%s - volume_down_stg: %d\n", __func__, adux1050->volume_down_stg);
-			pr_info("%s - hdmi_switch_stg: %d\n", __func__, adux1050->hdmi_switch_stg);
-#endif
 		} else {
 			pr_info("%s - Usg local pltfm data\n", __func__);
 		}
@@ -4388,9 +4222,6 @@ static int adux1050_probe(struct i2c_client *client,
 	INIT_WORK(&adux1050->work, adux1050_isr_work_fn);
 	INIT_WORK(&adux1050->calib_work, adux1050_calibration);
 	INIT_DELAYED_WORK(&adux1050->proxy_work, adux1050_proxy_work);
-#ifdef CONFIG_SOMC_EXTENSION
-	INIT_DELAYED_WORK(&adux1050->hdmi_switch_work, adux1050_hdmi_switch_work);
-#endif
 	/*
 	 * Allocate and register adux1050 input device
 	 */
@@ -4405,19 +4236,6 @@ static int adux1050_probe(struct i2c_client *client,
 	set_bit(EV_MSC, input->evbit);
 	input_set_capability(input, EV_MSC, MSC_RAW);
 
-#ifdef CONFIG_SOMC_EXTENSION
-	set_bit(EV_KEY, input->evbit);
-	set_bit(KEY_VOLUMEDOWN, input->keybit);
-	set_bit(KEY_VOLUMEUP, input->keybit);
-	set_bit(KEY_SWITCHVIDEOMODE, input->keybit);
-	set_bit(KEY_STOP, input->keybit);
-	set_bit(KEY_HOMEPAGE, input->keybit);
-
-	ret = adux1050_set_switch_device(adux1050);
-	if (ret) {
-		goto err_free_irq;
-	}
-#endif
 	ret = input_register_device(input);
 	if (ret) {
 		pr_err("%s: could not input_register_device(input);\n",
@@ -4499,9 +4317,6 @@ err_sysfs_create_input:
 #endif
 err_free_irq:
 	input_unregister_device(input);
-#ifdef CONFIG_SOMC_EXTENSION
-	switch_dev_unregister(&adux1050->hdmi);
-#endif
 
 err_kzalloc_mem:
 	kfree(adux1050);

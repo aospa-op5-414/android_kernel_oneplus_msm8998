@@ -594,10 +594,6 @@ ASCII Values for 0 is 30
 /**to convert proxy time units to seconds*/
 #define PROXY_TIME		(1000)
 
-#ifdef CONFIG_SOMC_EXTENSION
-#define LONG_PRESS_TIME		(1000)
-#endif
-
 /**
 Event packing for CDC Interrupt
 */
@@ -912,14 +908,6 @@ struct adux1050_chip {
 	bool proxy_cancel;
 	/** Power mode setting flag */
 	bool power_mode_flag;
-#ifdef CONFIG_SOMC_EXTENSION
-	bool hdmi_detect;
-	struct switch_dev hdmi;
-	struct delayed_work hdmi_switch_work;
-	u32 volume_up_stg;
-	u32 volume_down_stg;
-	u32 hdmi_switch_stg;
-#endif
 };
 
 #endif /* __LINUX_INPUT_ADUX1050_H__*/
