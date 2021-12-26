@@ -1102,33 +1102,6 @@ out:
 	return count;
 }
 
-#if defined(SOMC_TOUCH_BRINGUP)
-static ssize_t _store_init_late_session(struct device *dev,
-				const char *buf, size_t count)
-{
-	struct siw_ts *ts = to_touch_core(dev);
-
-	t_dev_info(dev, "%s:start\n", __func__);
-
-	if (ts->session.started)
-		goto out;
-
-	ts->session.started = sysfs_streq(buf, "0") ? false : true;
-
-	if (ts->session.done) {
-		t_dev_err(dev, "already session done\n");
-		goto out;
-	} else {
-		t_dev_info(dev, "start init late session "
-			"with init late session sysfs\n");
-		schedule_delayed_work(&ts->session.work, 0);
-	}
-
-out:
-	return count;
-}
-#endif
-
 extern int siw_touch_notify(struct siw_ts *ts, unsigned long event, void *data);
 
 static ssize_t _store_dbg_notify(struct device *dev,
@@ -1449,11 +1422,6 @@ static SIW_TOUCH_ATTR(sys_con,
 						show_sys_con,
 						store_sys_con);
 
-#if defined(SOMC_TOUCH_BRINGUP)
-static SIW_TOUCH_ATTR(init_late_session, NULL,
-						_store_init_late_session);
-#endif
-
 static struct attribute *siw_touch_attribute_list[] = {
 	&_SIW_TOUCH_ATTR_T(platform_data).attr,
 	&_SIW_TOUCH_ATTR_T(driver_data).attr,
@@ -1462,9 +1430,6 @@ static struct attribute *siw_touch_attribute_list[] = {
 	&_SIW_TOUCH_ATTR_T(dbg_flag).attr,
 	&_SIW_TOUCH_ATTR_T(init_late).attr,
 	&_SIW_TOUCH_ATTR_T(dbg_notify).attr,
-#if defined(SOMC_TOUCH_BRINGUP)
-	&_SIW_TOUCH_ATTR_T(init_late_session).attr,
-#endif
 	NULL,
 };
 

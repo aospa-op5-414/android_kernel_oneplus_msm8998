@@ -32,20 +32,8 @@
  * DOLLARS.
  */
 
-/* SOMC_TOUCH_BRINGUP start */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/input.h>
-#include <linux/delay.h>
-/* SOMC_TOUCH_BRINGUP end */
-
 #include <linux/crc32.h>
 #include <linux/firmware.h>
-
-/* SOMC_TOUCH_BRINGUP start */
-#include <linux/platform_device.h>
-#include <linux/input/synaptics_tcm.h>
-/* SOMC_TOUCH_BRINGUP end */
 
 #include "synaptics_tcm_core.h"
 

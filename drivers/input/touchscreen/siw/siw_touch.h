@@ -949,15 +949,6 @@ enum {
 	DEFAULT_NAME_SZ = PATH_MAX,
 };
 
-#if defined(SOMC_TOUCH_BRINGUP)
-struct siw_probe_session {
-	struct delayed_work work;
-	bool started;
-	bool done;
-	int retry;
-};
-#endif
-
 struct siw_ts {
 //	struct platform_device *pdev;
 
@@ -1133,9 +1124,6 @@ struct siw_ts {
 	int (*init_late)(void *data);
 	int init_late_done;
 
-#if defined(SOMC_TOUCH_BRINGUP)
-	struct siw_probe_session session;
-#endif
 };
 
 enum {

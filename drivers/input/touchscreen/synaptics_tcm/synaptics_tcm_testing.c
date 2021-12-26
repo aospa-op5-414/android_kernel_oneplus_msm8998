@@ -34,14 +34,6 @@
 
 #include <linux/gpio.h>
 
-/* SOMC_TOUCH_BRINGUP start */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/input.h>
-#include <linux/platform_device.h>
-#include <linux/input/synaptics_tcm.h>
-/* SOMC_TOUCH_BRINGUP end */
-
 #include "synaptics_tcm_core.h"
 
 #define SYSFS_DIR_NAME "testing"

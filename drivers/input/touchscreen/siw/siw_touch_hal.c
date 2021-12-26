@@ -252,23 +252,6 @@ static void siw_hal_init_gpio_reset(struct device *dev)
 {
 	struct siw_ts *ts = to_touch_core(dev);
 	int reset_pin = touch_reset_pin(ts);
-#if defined(SOMC_TOUCH_BRINGUP)
-	t_pr_err("%s:gpio check start\n",__func__);
-	if (__siw_hal_gpio_skip_reset(ts)) {
-		return;
-	}
-
-	siw_touch_gpio_direction_output(dev,
-			reset_pin, GPIO_OUT_ONE);
-	t_dev_dbg_gpio(dev, "SIW:set %s(%d) as output\n",
-			SIW_HAL_GPIO_RST, reset_pin);
-
-	siw_touch_gpio_set_pull(dev,
-			reset_pin, GPIO_PULL_UP);
-	t_dev_dbg_gpio(dev, "SIW:set %s(%d) as pull-up(%d)\n",
-			SIW_HAL_GPIO_RST,
-			reset_pin, GPIO_NO_PULL);
-#else
 	int ret = 0;
 
 	if (__siw_hal_gpio_skip_reset(ts)) {
@@ -291,7 +274,6 @@ static void siw_hal_init_gpio_reset(struct device *dev)
 	t_dev_dbg_gpio(dev, "set %s(%d) as pull-up(%d)\n",
 			SIW_HAL_GPIO_RST,
 			reset_pin, GPIO_NO_PULL);
-#endif
 }
 
 static void siw_hal_trigger_gpio_reset(struct device *dev)
@@ -7023,11 +7005,7 @@ enum {
 	/* */
 	SIW_GET_VER_SIMPLE	= (1<<16),
 	/* */
-#if defined(SOMC_TOUCH_BRINGUP)
-	SIW_GET_ALL            = 0xFFFF & ~SIW_GET_PRODUCT,    //Disable PID flag
-#else
 	SIW_GET_ALL			= 0xFFFF,
-#endif
 
 };
 

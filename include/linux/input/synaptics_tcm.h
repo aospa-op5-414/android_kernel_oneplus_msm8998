@@ -45,9 +45,6 @@
 #define I2C_MODULE_NAME "synaptics_tcm_i2c"
 #define SPI_MODULE_NAME "synaptics_tcm_spi"
 
-/* Somc bringup Trigger */
-#define SOMC_TOUCH_BRINGUP
-
 struct syna_tcm_board_data {
 	bool x_flip;
 	bool y_flip;

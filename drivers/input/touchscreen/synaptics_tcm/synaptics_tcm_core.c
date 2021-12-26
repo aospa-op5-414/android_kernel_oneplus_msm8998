@@ -32,23 +32,11 @@
  * DOLLARS.
  */
 
-/* SOMC_TOUCH_BRINGUP start */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/input.h>
-#include <linux/delay.h>
-/* SOMC_TOUCH_BRINGUP end */
-
 #include <linux/gpio.h>
 #include <linux/kthread.h>
 #include <linux/interrupt.h>
 #include <linux/regulator/consumer.h>
 #include <uapi/linux/sched/types.h>
-
-/* SOMC_TOUCH_BRINGUP start */
-#include <linux/platform_device.h>
-#include <linux/input/synaptics_tcm.h>
-/* SOMC_TOUCH_BRINGUP end */
 
 #ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
 #include <linux/incell.h>
