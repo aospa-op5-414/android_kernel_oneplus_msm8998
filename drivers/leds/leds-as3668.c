@@ -40,12 +40,7 @@
 #define AS3668_VMON_MIN_VOLTAGE 3000 /* mA */
 #define AS3668_VMON_VOLTAGE_STEP 150 /* mA */
 
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-#define AS3668_NUM_LEDS 3
-#define AS3668_CURRENT_MAX_PATTERN 4
-#else /* CONFIG_LEDS_AS3668_EXTENSION */
 #define AS3668_NUM_LEDS 4
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 
 /* AS3668 registers */
 #define AS3668_REG_ChipID1	0x3E
@@ -78,12 +73,6 @@
 #define AS3668_REG_Audio_Ctrl	0x42
 #define AS3668_REG_Audio_Output	0x43
 
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-#define AS3668_RGB_BR_MAX	255
-#define AS3668_DEFAULT_MONITOR_MV	3000
-#define AS3668_DEFAULT_SRC_MASK	0x7
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
-
 #define ldev_to_led(c)       container_of(c, struct as3668_led, ldev)
 
 #define AS3668_WRITE_REG(a, b) as3668_write_reg(data, (a), (b))
@@ -93,15 +82,6 @@
 
 #define AS3668_LOCK()   mutex_lock(&(data)->update_lock)
 #define AS3668_UNLOCK() mutex_unlock(&(data)->update_lock)
-
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-enum {
-	MODE_OFF = 0,
-	MODE_ON,
-	MODE_BLINK_PWM,
-	MODE_BLINK_PATTERN,
-};
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 
 struct as3668_reg {
 	const char *name;
@@ -130,17 +110,6 @@ struct as3668_led {
 	u8 pattern_frame_mask;
 	u8 pattern_frame_delay;
 	u8 pattern_brightness;
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-	u8 max_single_brightness;
-	u8 max_mix_brightness;
-	u8 fade_max_brightness;
-	u8 fade_min_brightness;
-	u8 fade_brightness;
-	struct work_struct fade_in_work;
-	struct delayed_work delayed_fade_out_work;
-	int led_off_delay;
-	bool delay_enable;
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 	u8 audio_enable;
 	u8 audio_brightness;
 };
@@ -154,10 +123,6 @@ struct as3668_data {
 	int num_leds;
 	int pattern_running;
 	int dimming_in_progress;
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-	unsigned long pattern_on_time;
-	unsigned long pattern_off_time;
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 	u8 pwm_dim_speed_up;
 	u8 pwm_dim_speed_down;
 	u8 pwm_dim_shape;
@@ -302,7 +267,6 @@ static const struct as3668_data as3668_default_data = {
 			.pattern_frame_delay = 0,
 			.audio_enable = 0,
 		},
-#ifndef CONFIG_LEDS_AS3668_EXTENSION
 		{
 			.name = "as3668::curr4",
 			.reg = AS3668_REG_Curr4_Current,
@@ -319,7 +283,6 @@ static const struct as3668_data as3668_default_data = {
 			.pattern_frame_delay = 0,
 			.audio_enable = 0,
 		},
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 	},
 	.regs = {
 		AS3668_REG(ChipID1, 0xA5),
@@ -352,47 +315,6 @@ static const struct as3668_data as3668_default_data = {
 	},
 };
 
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-static struct as3668_platform_data as3668_ext_data = {
-	.vbat_monitor_voltage_mV = 3000,
-	.pattern_start_source = AS3668_PATTERN_START_SOURCE_SW,
-	.pwm_source = AS3668_PWM_SOURCE_INTERNAL,
-	.gpio_input_invert = 0,
-	.gpio_input_mode = AS3668_GPIO_INPUT_MODE_ANALOG,
-	.gpio_mode = AS3668_GPIO_MODE_INPUT_ONLY,
-	.audio_input_pin = AS3668_AUDIO_INPUT_CURR4,
-	.audio_pulldown_off = 0,
-	.audio_man_start = AS3668_AUDIO_AUTO_PRECHARGE,
-	.audio_dis_start = AS3668_AUDIO_INPUT_CAP_PRECHARGE,
-	.audio_adc_characteristic = 0,
-	.leds[0] = {
-		.name = "blue",
-		.max_current_uA = 25500,
-	},
-	.leds[1] = {
-		.name = "red",
-		.max_current_uA = 25500,
-	},
-	.leds[2] = {
-		.name = "green",
-		.max_current_uA = 25500,
-	},
-};
-
-static int rgb_current_index;
-static int __init rgb_current_setup(char *str)
-{
-	unsigned int res;
-
-	if (!*str)
-		return 0;
-	if (!kstrtouint(str, 16, &res))
-		rgb_current_index = res;
-	return 1;
-}
-__setup("oemandroidboot.babe137e=", rgb_current_setup);
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
-
 static s32 as3668_write_reg(struct as3668_data *data, u8 addr, u8 val)
 {
 	s32 ret;
@@ -422,19 +344,10 @@ static s32 as3668_modify_reg(struct as3668_data *data, u8 addr, u8 mask, u8 val)
 static void as3668_shutdown(struct i2c_client *client)
 {
 	struct as3668_data *data = i2c_get_clientdata(client);
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-	unsigned i;
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 
 	dev_info(&client->dev, "Shutting down AS3668\n");
 
 	AS3668_LOCK();
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-	for (i = 0; i < data->num_leds; i++) {
-		AS3668_WRITE_REG(data->leds[i].reg, LED_OFF);
-		AS3668_WRITE_REG(data->leds[i].mode_reg, MODE_OFF);
-	}
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 	AS3668_UNLOCK();
 }
 #endif
@@ -668,33 +581,6 @@ static ssize_t as3668_pattern_pwm_dim_speed_up_ms_store(struct device *dev,
 	return strnlen(buf, PAGE_SIZE);
 }
 
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-static ssize_t as3668_pattern_time_on_ms_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct as3668_data *data = dev_get_drvdata(dev);
-
-	snprintf(buf, PAGE_SIZE, "%d\n", (int)data->pattern_on_time);
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static ssize_t as3668_pattern_time_on_ms_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	struct as3668_data *data = dev_get_drvdata(dev);
-	int i;
-	int pattern_ton;
-
-	i = sscanf(buf, "%d", &pattern_ton);
-	if (pattern_ton < 0)
-		return -EINVAL;
-
-	data->pattern_on_time = pattern_ton;
-
-	return strnlen(buf, PAGE_SIZE);
-}
-#else /* CONFIG_LEDS_AS3668_EXTENSION */
 static ssize_t as3668_pattern_time_on_ms_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -720,35 +606,7 @@ static ssize_t as3668_pattern_time_on_ms_store(struct device *dev,
 		return -EINVAL;
 	return strnlen(buf, PAGE_SIZE);
 }
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-static ssize_t as3668_pattern_time_off_ms_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct as3668_data *data = dev_get_drvdata(dev);
-
-	snprintf(buf, PAGE_SIZE, "%d\n", (int)data->pattern_off_time);
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static ssize_t as3668_pattern_time_off_ms_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	struct as3668_data *data = dev_get_drvdata(dev);
-	int i;
-	int pattern_toff;
-
-	i = sscanf(buf, "%d", &pattern_toff);
-	if (pattern_toff < 0)
-		return -EINVAL;
-
-	data->pattern_off_time = pattern_toff;
-
-	return strnlen(buf, PAGE_SIZE);
-}
-#else /* CONFIG_LEDS_AS3668_EXTENSION */
 static ssize_t as3668_pattern_time_off_ms_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -774,7 +632,6 @@ static ssize_t as3668_pattern_time_off_ms_store(struct device *dev,
 		return -EINVAL;
 	return strnlen(buf, PAGE_SIZE);
 }
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 
 static ssize_t as3668_pattern_source_mask_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -899,81 +756,6 @@ static ssize_t as3668_pattern_run_show(struct device *dev,
 	return strnlen(buf, PAGE_SIZE);
 }
 
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-static ssize_t as3668_pattern_run_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	struct as3668_data *data = dev_get_drvdata(dev);
-	struct as3668_led *led;
-	int i;
-	int pattern_run;
-	u8 mode_mask = 0, mode_ctrl = 0;
-
-	i = sscanf(buf, "%d", &pattern_run);
-	if ((i != 1) || (pattern_run > 1) || (pattern_run < 0)) {
-		dev_info(dev,
-			"define pattern run as 0 or 1 (1.. start pattern, 0.. stop pattern)\n");
-		return -EINVAL;
-	}
-	if ((pattern_run == 1) && (as3668_pattern_in_use(data)) &&
-			(data->pattern_running == 1)) {
-		dev_info(dev, "pattern generator already in use\n");
-		return -EBUSY;
-	}
-
-	data->pattern_run = pattern_run;
-
-	if (pattern_run == 1) {
-		AS3668_LOCK();
-		as3668_set_pattern_ton(data, (u16)data->pattern_on_time);
-		as3668_set_pattern_toff(data, (u16)data->pattern_off_time);
-		AS3668_MODIFY_REG(AS3668_REG_Pwm_Timing, 0x0F,
-				data->pwm_dim_speed_down);
-		AS3668_MODIFY_REG(AS3668_REG_Pwm_Timing, 0xF0,
-				data->pwm_dim_speed_up << 4);
-		AS3668_MODIFY_REG(AS3668_REG_Multiple_Pulse, 0xC0,
-			data->pattern_multiple_pulse << 6);
-		AS3668_MODIFY_REG(AS3668_REG_Multiple_Pulse, 0x03,
-				data->pattern_tp_led);
-		data->pattern_running = 1;
-		for (i = 0; i < data->num_leds; i++) {
-			led = &data->leds[i];
-			mode_mask |= (0x03 << led->mode_shift);
-			if (led->pattern_brightness) {
-				AS3668_MODIFY_REG(AS3668_REG_Frame_Mask,
-					0x03 << led->pattern_frame_mask_shift,
-					led->pattern_frame_mask << led->pattern_frame_mask_shift);
-				mode_ctrl |= (MODE_BLINK_PATTERN << led->mode_shift);
-			} else {
-				AS3668_MODIFY_REG(AS3668_REG_Frame_Mask,
-					0x03 << led->pattern_frame_mask_shift,
-					0 << led->pattern_frame_mask_shift);
-				mode_ctrl |= (MODE_OFF << led->mode_shift);
-			}
-			AS3668_WRITE_REG(led->reg, led->pattern_brightness);
-		}
-		AS3668_MODIFY_REG(AS3668_REG_CurrX_Ctrl, mode_mask, mode_ctrl);
-		AS3668_MODIFY_REG(AS3668_REG_Start_Ctrl, 0x06,
-			((data->pattern_fade_out << 2) | (pattern_run << 1)));
-		AS3668_UNLOCK();
-	} else {
-		AS3668_LOCK();
-		data->pattern_running = 0;
-		for (i = 0; i < data->num_leds; i++) {
-			led = &data->leds[i];
-			as3668_switch_led(data, led, MODE_OFF);
-			AS3668_MODIFY_REG(AS3668_REG_Frame_Mask,
-				0x03 << led->pattern_frame_mask_shift,
-				0 << led->pattern_frame_mask_shift);
-			AS3668_WRITE_REG(led->reg, LED_OFF);
-		}
-		AS3668_MODIFY_REG(AS3668_REG_Start_Ctrl, 0x02, (pattern_run << 1));
-		AS3668_UNLOCK();
-	}
-	return strnlen(buf, PAGE_SIZE);
-}
-#else /* CONFIG_LEDS_AS3668_EXTENSION */
 static ssize_t as3668_pattern_run_store(struct device *dev,
 		struct device_attribute *attr,
 		const char *buf, size_t size)
@@ -1030,7 +812,6 @@ static ssize_t as3668_pattern_run_store(struct device *dev,
 	}
 	return strnlen(buf, PAGE_SIZE);
 }
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 
 static ssize_t as3668_pwm_dim_mask_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -1153,15 +934,6 @@ static ssize_t as3668_pwm_dim_start_store(struct device *dev,
 		AS3668_MODIFY_REG(AS3668_REG_Pwm_Timing, 0xF0,
 				data->pwm_dim_speed_up << 4);
 		direction = 0;
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-		for (i = 0; i < data->num_leds; i++) {
-			if (data->pwm_dim_mask & (1 << i)) {
-				as3668_switch_led(data, &data->leds[i], 0x02);
-				AS3668_WRITE_REG(data->leds[i].reg,
-					data->leds[i].pwm_brightness);
-			}
-		}
-#else /* CONFIG_LEDS_AS3668_EXTENSION */
 		if (data->pwm_dim_mask & 0x01) {
 			as3668_switch_led(data, &data->leds[0], 0x02);
 			AS3668_WRITE_REG(AS3668_REG_Curr1_Current, data->leds[0].pwm_brightness);
@@ -1178,7 +950,6 @@ static ssize_t as3668_pwm_dim_start_store(struct device *dev,
 			as3668_switch_led(data, &data->leds[3], 0x02);
 			AS3668_WRITE_REG(AS3668_REG_Curr4_Current, data->leds[3].pwm_brightness);
 		}
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 		data->pattern_running = 1;
 		if (data->pwm_dim_direction == 1) {
 			AS3668_MODIFY_REG(AS3668_REG_Pwm_Trigger,
@@ -1937,119 +1708,8 @@ static ssize_t as3668_pattern_predef_run_num_store(struct device *dev,
 	return strnlen(buf, PAGE_SIZE);
 }
 #endif
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-static ssize_t as3668_fade_brightness_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct as3668_led *led = ldev_to_led(dev_get_drvdata(dev));
-
-	snprintf(buf, PAGE_SIZE, "%d\n", led->fade_brightness);
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static ssize_t as3668_fade_brightness_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	struct as3668_led *led = ldev_to_led(dev_get_drvdata(dev));
-	int i;
-	int fade_brightness;
-
-	i = sscanf(buf, "%d", &fade_brightness);
-	if (i != 1)
-		return -EINVAL;
-
-	led->fade_brightness = (u8)fade_brightness;
-	if (led->fade_brightness != LED_OFF) {
-		led->delay_enable = false;
-		cancel_work_sync(&led->fade_in_work);
-		cancel_delayed_work_sync(&led->delayed_fade_out_work);
-
-		schedule_work(&led->fade_in_work);
-		schedule_delayed_work(&led->delayed_fade_out_work,
-				msecs_to_jiffies((u16)led->led_off_delay));
-	} else {
-		if (delayed_work_pending(&led->delayed_fade_out_work)) {
-			led->delay_enable = true;
-		} else {
-			led->delay_enable = true;
-			schedule_delayed_work(&led->delayed_fade_out_work, 0);
-		}
-	}
-
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static ssize_t as3668_fade_max_brightness_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct as3668_led *led = ldev_to_led(dev_get_drvdata(dev));
-
-	snprintf(buf, PAGE_SIZE, "%d\n", led->fade_max_brightness);
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static ssize_t as3668_fade_max_brightness_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	struct as3668_led *led = ldev_to_led(dev_get_drvdata(dev));
-	int i;
-	int fade_max_brightness;
-
-	i = sscanf(buf, "%d", &fade_max_brightness);
-	if (i != 1)
-		return -EINVAL;
-	led->fade_max_brightness = (u8)fade_max_brightness;
-
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static ssize_t as3668_fade_min_brightness_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct as3668_led *led = ldev_to_led(dev_get_drvdata(dev));
-
-	snprintf(buf, PAGE_SIZE, "%d\n", led->fade_min_brightness);
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static ssize_t as3668_fade_min_brightness_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	struct as3668_led *led = ldev_to_led(dev_get_drvdata(dev));
-	int i;
-	int fade_min_brightness;
-
-	i = sscanf(buf, "%d", &fade_min_brightness);
-	if (i != 1)
-		return -EINVAL;
-	led->fade_min_brightness = (u8)fade_min_brightness;
-
-	return strnlen(buf, PAGE_SIZE);
-}
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 
 /** led class device files **************************************************/
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-static void as3668_set_led_brightness(struct led_classdev *led_cdev,
-		enum led_brightness value)
-{
-	struct as3668_led *led = ldev_to_led(led_cdev);
-
-	if (value < LED_OFF) {
-		dev_err(&led->client->dev, "Invalid brightness value\n");
-		return;
-	}
-
-	if (value > led_cdev->max_brightness)
-		value = led_cdev->max_brightness;
-
-	led->ldev.brightness = (u8)value;
-	schedule_work(&led->brightness_work);
-}
-#else /* CONFIG_LEDS_AS3668_EXTENSION */
 static void as3668_set_led_brightness(struct led_classdev *led_cdev,
 		enum led_brightness value)
 {
@@ -2058,7 +1718,6 @@ static void as3668_set_led_brightness(struct led_classdev *led_cdev,
 	led->ldev.brightness = (u8)value;
 	schedule_work(&led->brightness_work);
 }
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 
 static void as3668_set_brightness_work(struct work_struct  *work)
 {
@@ -2077,57 +1736,7 @@ static void as3668_set_brightness_work(struct work_struct  *work)
 	AS3668_WRITE_REG(led->reg, led->ldev.brightness);
 	AS3668_UNLOCK();
 }
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-static void as3668_set_fade_in_work(struct work_struct  *work)
-{
-	struct as3668_led *led = container_of(work, struct as3668_led,
-			fade_in_work);
-	struct i2c_client *client = led->client;
-	struct device *dev = &client->dev;
-	struct as3668_data *data = dev_get_drvdata(dev);
-	u8 brightness;
-	u8 current_brightness;
 
-	led->mode = 0x01;
-	AS3668_LOCK();
-	current_brightness = AS3668_READ_REG(led->reg);
-	as3668_switch_led(data, led, led->mode);
-	for (brightness = current_brightness;
-			brightness <= led->fade_max_brightness; brightness++) {
-		msleep(10);
-		AS3668_WRITE_REG(led->reg, brightness);
-	}
-	AS3668_UNLOCK();
-}
-static void as3668_set_delayed_fade_out_work(struct work_struct  *work)
-{
-	struct as3668_led *led = container_of(work, struct as3668_led,
-			delayed_fade_out_work.work);
-	struct i2c_client *client = led->client;
-	struct device *dev = &client->dev;
-	struct as3668_data *data = dev_get_drvdata(dev);
-	u8 brightness;
-	u8 current_brightness;
-
-	if (!led->delay_enable) return;
-	led->mode = 0x01;
-	AS3668_LOCK();
-	current_brightness = AS3668_READ_REG(led->reg);
-	as3668_switch_led(data, led, led->mode);
-	for (brightness = current_brightness;
-			brightness >= led->fade_min_brightness; brightness--) {
-		msleep(10);
-		if (brightness == 0) {
-			led->mode = 0x00;
-			as3668_switch_led(data, led, led->mode);
-		}
-		AS3668_WRITE_REG(led->reg, brightness);
-	}
-
-	AS3668_UNLOCK();
-}
-
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 static int as3668_set_led_blink(struct led_classdev *led_cdev,
 		unsigned long *delay_on,
 		unsigned long *delay_off) {
@@ -2254,24 +1863,6 @@ static ssize_t as3668_pattern_frame_mask_show(struct device *dev,
 	return strnlen(buf, PAGE_SIZE);
 }
 
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-static ssize_t as3668_pattern_frame_mask_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	struct as3668_led *led = ldev_to_led(dev_get_drvdata(dev));
-	int i;
-	int frame_mask;
-
-	i = sscanf(buf, "%d", &frame_mask);
-	if (i != 1)
-		return -EINVAL;
-	if (frame_mask > 3 || frame_mask < 0)
-		return -EINVAL;
-	led->pattern_frame_mask = frame_mask;
-	return strnlen(buf, PAGE_SIZE);
-}
-#else /* CONFIG_LEDS_AS3668_EXTENSION */
 static ssize_t as3668_pattern_frame_mask_store(struct device *dev,
 		struct device_attribute *attr,
 		const char *buf, size_t size)
@@ -2292,7 +1883,6 @@ static ssize_t as3668_pattern_frame_mask_store(struct device *dev,
 		frame_mask << led->pattern_frame_mask_shift);
 	return strnlen(buf, PAGE_SIZE);
 }
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 
 static ssize_t as3668_pattern_frame_delay_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -2333,89 +1923,6 @@ static ssize_t as3668_pattern_brightness_show(struct device *dev,
 	return strnlen(buf, PAGE_SIZE);
 }
 
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-static ssize_t as3668_pattern_brightness_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	struct as3668_led *led = ldev_to_led(dev_get_drvdata(dev));
-	int i;
-	int pattern_brightness;
-
-	i = sscanf(buf, "%d", &pattern_brightness);
-	if (i != 1)
-		return -EINVAL;
-
-	if (pattern_brightness < LED_OFF) {
-		dev_err(dev, "Invalid pattern_brightness value\n");
-		return -EINVAL;
-	}
-
-	if (pattern_brightness > (led->pled->max_current_uA / 100))
-		pattern_brightness = (led->pled->max_current_uA / 100);
-
-	led->pattern_brightness = pattern_brightness;
-
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static ssize_t as3668_max_mix_brightness_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct as3668_led *led = ldev_to_led(dev_get_drvdata(dev));
-
-	snprintf(buf, PAGE_SIZE, "%d\n", led->max_mix_brightness);
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static ssize_t as3668_max_mix_brightness_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	struct as3668_led *led = ldev_to_led(dev_get_drvdata(dev));
-	int i;
-	int max_mix_brightness;
-
-	i = sscanf(buf, "%d", &max_mix_brightness);
-	if (i != 1)
-		return -EINVAL;
-	led->max_mix_brightness = max_mix_brightness;
-	if (led->max_mix_brightness > led->ldev.max_brightness) {
-		led->ldev.max_brightness = led->max_mix_brightness;
-		led->pled->max_current_uA = led->max_mix_brightness * 100;
-	}
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static ssize_t as3668_max_single_brightness_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct as3668_led *led = ldev_to_led(dev_get_drvdata(dev));
-
-	snprintf(buf, PAGE_SIZE, "%d\n", led->max_single_brightness);
-	return strnlen(buf, PAGE_SIZE);
-}
-
-static ssize_t as3668_max_single_brightness_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	struct as3668_led *led = ldev_to_led(dev_get_drvdata(dev));
-	int i;
-	int max_single_brightness;
-
-	i = sscanf(buf, "%d", &max_single_brightness);
-	if (i != 1)
-		return -EINVAL;
-	led->max_single_brightness = max_single_brightness;
-	if (led->max_single_brightness > led->ldev.max_brightness) {
-		led->ldev.max_brightness = led->max_single_brightness;
-		led->pled->max_current_uA = led->max_single_brightness * 100;
-	}
-	return strnlen(buf, PAGE_SIZE);
-}
-
-#else /* CONFIG_LEDS_AS3668_EXTENSION */
 static ssize_t as3668_pattern_brightness_store(struct device *dev,
 		struct device_attribute *attr,
 		const char *buf, size_t size)
@@ -2432,7 +1939,6 @@ static ssize_t as3668_pattern_brightness_store(struct device *dev,
 	led->pattern_brightness = pattern_brightness;
 	return strnlen(buf, PAGE_SIZE);
 }
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 
 static ssize_t as3668_audio_enable_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -2583,13 +2089,6 @@ static struct device_attribute as3668_led_attributes[] = {
 	AS3668_ATTR(pattern_frame_mask),
 	AS3668_ATTR(pattern_frame_delay),
 	AS3668_ATTR(pattern_brightness),
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-	AS3668_ATTR(max_mix_brightness),
-	AS3668_ATTR(max_single_brightness),
-	AS3668_ATTR(fade_brightness),
-	AS3668_ATTR(fade_max_brightness),
-	AS3668_ATTR(fade_min_brightness),
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 	AS3668_ATTR(audio_enable),
 	AS3668_ATTR(audio_brightness),
 	AS3668_ATTR(breath),
@@ -2667,11 +2166,6 @@ static int as3668_configure(struct i2c_client *client,
 		led->ldev.blink_delay_off = 0;
 		led->pwm_brightness = LED_OFF;
 		INIT_WORK(&led->brightness_work, as3668_set_brightness_work);
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-		INIT_WORK(&led->fade_in_work, as3668_set_fade_in_work);
-		INIT_DELAYED_WORK(&led->delayed_fade_out_work,
-				as3668_set_delayed_fade_out_work);
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 		INIT_WORK(&led->blink_work, as3668_set_blink_work);
 		err = led_classdev_register(&client->dev, &led->ldev);
 		if (err < 0) {
@@ -2706,255 +2200,11 @@ exit:
 	return err;
 }
 
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-static int as3668_parse_dt(struct device *dev,
-		struct as3668_data *data,
-		struct as3668_platform_data *pdata)
-{
-	struct device_node *node, *temp = NULL;
-	int rc = 0, num_leds = 0, parsed_leds = 0, i, current_index;
-	int ext_rc = 0;
-	struct as3668_platform_led *pled;
-	struct as3668_led *led = NULL;
-	const char *led_label;
-	u32 *rgb_current;
-	u32 tmp_data, color_variation_max_num;
-
-	node = dev->of_node;
-	while ((temp = of_get_next_child(node, temp)))
-		num_leds++;
-	if (!num_leds) {
-		dev_err(dev, "Unable to get rgb parameter\n");
-		rc = -ECHILD;
-		goto exit;
-	}
-	rc = of_property_read_u32(dev->of_node, "somc,led_num", &tmp_data);
-	if (rc < 0) {
-		dev_err(dev, "Unable to read num_leds\n");
-		data->num_leds = AS3668_NUM_LEDS;
-	} else {
-		data->num_leds = tmp_data;
-	}
-
-	rc = of_property_read_u32(dev->of_node,
-			"somc,pattern_pwm_dim_speed_down_ms", &tmp_data);
-	if (rc < 0) {
-		dev_err(dev, "Unable to read pattern_pwm_dim_speed_down_ms\n");
-		data->pwm_dim_speed_down = 0;
-	} else {
-		dev_err(dev, "pwm_dim_speed_down = %d\n", tmp_data);
-		data->pwm_dim_speed_down = tmp_data;
-	}
-
-	rc = of_property_read_u32(dev->of_node,
-			"somc,pattern_pwm_dim_speed_up_ms", &tmp_data);
-	if (rc < 0) {
-		dev_err(dev, "Unable to read pattern_pwm_dim_speed_up_ms\n");
-		data->pwm_dim_speed_up = 0;
-	} else {
-		dev_err(dev, "pwm_dim_speed_up = %d\n", tmp_data);
-		data->pwm_dim_speed_up = tmp_data;
-	}
-
-	rc = of_property_read_u32(dev->of_node,
-			"somc,pattern_source_mask", &tmp_data);
-	if (rc < 0) {
-		dev_err(dev, "Unable to read pattern_source_mask\n");
-		data->pattern_source_mask = AS3668_DEFAULT_SRC_MASK;
-	} else {
-		dev_err(dev, "pattern_source_mask = %d\n", tmp_data);
-		data->pattern_source_mask = tmp_data;
-	}
-
-	rc = of_property_read_u32(dev->of_node,
-			"somc,pattern_multiple_pulse", &tmp_data);
-	if (rc < 0) {
-		dev_err(dev, "Unable to read pattern_multiple_pulse\n");
-		data->pattern_multiple_pulse = 1;
-	} else {
-		data->pattern_multiple_pulse = tmp_data;
-	}
-
-	rc = of_property_read_u32(dev->of_node,
-			"somc,pattern_tp_led", &tmp_data);
-	if (rc < 0) {
-		dev_err(dev, "Unable to read pattern_tp_led\n");
-		data->pattern_tp_led = 0;
-	} else {
-		data->pattern_tp_led = tmp_data;
-	}
-
-	rc = of_property_read_u32(dev->of_node,
-			"somc,pattern_fade_out", &tmp_data);
-	if (rc < 0) {
-		dev_err(dev, "Unable to read pattern_fade_out\n");
-		data->pattern_fade_out = 0;
-	} else {
-		data->pattern_fade_out = tmp_data;
-	}
-
-	rc = of_property_read_u32(dev->of_node,
-			"somc,color_variation_max_num", &tmp_data);
-	if (rc < 0) {
-		dev_err(dev, "Unable to read pattern_fade_out\n");
-		color_variation_max_num = AS3668_CURRENT_MAX_PATTERN;
-	} else {
-		color_variation_max_num = tmp_data;
-	}
-	dev_info(dev, "color_variation_max_num[%d] rgb_current_index[%d]\n",
-		color_variation_max_num, rgb_current_index);
-
-	rc = of_property_read_u32(node,
-			"somc,pattern_start_source", &tmp_data);
-	if (rc < 0) {
-		dev_err(dev, "Unable to read pattern_start_source\n");
-		pdata->pattern_start_source = AS3668_PATTERN_START_SOURCE_SW;
-	} else {
-		pdata->pattern_start_source = tmp_data;
-	}
-	rc = of_property_read_u32(node,
-			"somc,pwm_source", &tmp_data);
-	if (rc < 0) {
-		dev_err(dev, "Unable to read pwm_source\n");
-		pdata->pwm_source = AS3668_PWM_SOURCE_INTERNAL;
-	} else {
-		pdata->pwm_source = tmp_data;
-	}
-
-	rgb_current = devm_kzalloc(dev,
-		sizeof(u32) * color_variation_max_num * (AS3668_NUM_LEDS * 2 + 1), GFP_KERNEL);
-	if (!rgb_current) {
-		dev_err(dev, "Failed to alloc rgb_current\n");
-		led->max_mix_brightness = AS3668_MAX_OUTPUT_CURRENT / 100;
-		led->max_single_brightness = AS3668_MAX_OUTPUT_CURRENT / 100;
-	} else {
-		rc = of_property_read_u32_array(node, "somc,max_current_uA",
-				rgb_current, color_variation_max_num * (AS3668_NUM_LEDS * 2 + 1));
-		if (rc < 0) {
-			dev_err(dev, "Unable to read max_mix_current_uA\n");
-			for (i = 0; i < color_variation_max_num * (AS3668_NUM_LEDS * 2 + 1); i++) {
-				current_index = i % (AS3668_NUM_LEDS * 2 + 1);
-				if (!current_index)
-					rgb_current[i] =
-						i / (AS3668_NUM_LEDS * 2 + 1);
-				else
-					rgb_current[i] = AS3668_MAX_OUTPUT_CURRENT;
-			}
-		}
-	}
-
-	for_each_child_of_node(node, temp) {
-		pled = &pdata->leds[parsed_leds];
-		led = &data->leds[parsed_leds];
-		rc = of_property_read_string(temp, "label", &led_label);
-		if (rc < 0) {
-			dev_err(dev, "Unable to read label, rc = %d\n", rc);
-			goto exit;
-		}
-		if (strncmp(led_label, "rgb", sizeof("rgb")) == 0) {
-			rc = of_property_read_string(temp,
-					"linux,name", &pled->name);
-			if (rc < 0) {
-				dev_err(dev, "Unable to read linux,name\n");
-				goto exit;
-			}
-			current_index = (color_variation_max_num - 1) * (AS3668_NUM_LEDS * 2 + 1);
-			if (rgb_current_index < rgb_current[0]
-				|| rgb_current_index > rgb_current[current_index]) {
-				current_index = (color_variation_max_num - 1) * (AS3668_NUM_LEDS * 2 + 1) + 1;
-				led->max_single_brightness = rgb_current[current_index + parsed_leds * 2] / 100;
-				led->max_mix_brightness = rgb_current[current_index + parsed_leds * 2 + 1] / 100;
-			} else {
-				for (i = 0; i < color_variation_max_num; i++) {
-					current_index = i * (AS3668_NUM_LEDS * 2 + 1);
-					if (rgb_current_index == rgb_current[current_index]) {
-						break;
-					}
-				}
-				led->max_single_brightness = rgb_current[current_index + 1 + parsed_leds * 2] / 100;
-				led->max_mix_brightness = rgb_current[current_index + 1 + parsed_leds * 2 + 1] / 100;
-			}
-
-			if (led->max_single_brightness > led->max_mix_brightness)
-				pled->max_current_uA = led->max_single_brightness * 100;
-			else
-				pled->max_current_uA = led->max_mix_brightness * 100;
-			dev_info(dev, "%s max_single_brightness[%d] max_mix_brightness[%d]\n",
-				(parsed_leds < 1 ? "blue" : (parsed_leds < 2 ? "red" : "green")),
-				led->max_single_brightness, led->max_mix_brightness);
-
-			rc = of_property_read_u32(temp,
-				"somc,pattern_frame_mask", &tmp_data);
-			if (rc < 0) {
-				dev_err(dev,
-					"Unable to read pattern_frame_mask %d\n",
-					tmp_data);
-				led->pattern_frame_mask = 0;
-			} else {
-				led->pattern_frame_mask = tmp_data;
-			}
-			rc = of_property_read_u32(temp,
-				"somc,pattern_frame_delay", &tmp_data);
-			if (rc < 0) {
-				dev_err(dev,
-					"Unable to read pattern_frame_delay %d\n",
-					tmp_data);
-				led->pattern_frame_delay = 0;
-			} else {
-				led->pattern_frame_delay = tmp_data;
-			}
-			ext_rc = of_property_read_u32(temp,
-				"somc,fade_max_brightness", &tmp_data);
-			if (ext_rc < 0) {
-				dev_err(dev,
-					"Unable to read fade_max_brightness %d\n",
-					tmp_data);
-				led->fade_max_brightness = 0;
-			} else {
-				led->fade_max_brightness = tmp_data;
-			}
-			ext_rc = of_property_read_u32(temp,
-				"somc,fade_min_brightness", &tmp_data);
-			if (ext_rc < 0) {
-				dev_err(dev,
-					"Unable to read fade_min_brightness %d\n",
-					tmp_data);
-				led->fade_min_brightness = 0;
-			} else {
-				led->fade_min_brightness = tmp_data;
-			}
-			ext_rc = of_property_read_u32(temp,
-				"somc,fade_led_off_delay", &tmp_data);
-			if (ext_rc < 0) {
-				dev_err(dev,
-					"Unable to read led_off_delay %d\n",
-					tmp_data);
-				led->led_off_delay = 0;
-			} else {
-				led->led_off_delay = tmp_data;
-			}
-		} else {
-			dev_err(dev, "No LED matching label\n");
-			rc = -EINVAL;
-			goto exit;
-		}
-		parsed_leds++;
-	}
-
-exit:
-	return rc;
-}
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
-
 static int as3668_probe(struct i2c_client *client,
 		const struct i2c_device_id *id)
 {
 	struct as3668_data *data;
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-	struct as3668_platform_data *as3668_pdata = &as3668_ext_data;
-#else /* CONFIG_LEDS_AS3668_EXTENSION */
 	struct as3668_platform_data *as3668_pdata = client->dev.platform_data;
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 	int id1, id2, i;
 	int err = 0;
 
@@ -2971,14 +2221,6 @@ static int as3668_probe(struct i2c_client *client,
 
 	/* initialize with meaningful data (register names, etc.) */
 	*data = as3668_default_data;
-
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-	err = as3668_parse_dt(&client->dev, data, as3668_pdata);
-	if (err < 0) {
-		dev_err(&client->dev, "%s:failed to parse pdata\n", __func__);
-		goto exit;
-	}
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 
 	dev_set_drvdata(&client->dev, data);
 
@@ -3043,13 +2285,6 @@ static int as3668_remove(struct i2c_client *client)
 	return 0;
 }
 
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-static const struct of_device_id as3668_dt_ids[] = {
-	{ .compatible = "as3668", },
-	{ }
-};
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
-
 static const struct i2c_device_id as3668_id[] = {
 	{ "as3668", 0 },
 	{ }
@@ -3059,13 +2294,7 @@ MODULE_DEVICE_TABLE(i2c, as3668_id);
 
 static struct i2c_driver as3668_driver = {
 	.driver = {
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-		.owner	= THIS_MODULE,
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 		.name   = "as3668",
-#ifdef CONFIG_LEDS_AS3668_EXTENSION
-		.of_match_table = of_match_ptr(as3668_dt_ids),
-#endif /* CONFIG_LEDS_AS3668_EXTENSION */
 	},
 	.probe  = as3668_probe,
 	.remove = as3668_remove,
