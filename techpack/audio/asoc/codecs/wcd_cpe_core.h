@@ -95,11 +95,6 @@ struct wcd_cpe_ssr_entry {
 	int offline;
 	u32 offline_change;
 	wait_queue_head_t offline_poll_wait;
-#ifdef CONFIG_SND_SOC_WCD_CPE_SOMC_EXT
-	int err_status;
-	int err_data_ready;
-	wait_queue_head_t err_status_debug_q;
-#endif
 	struct snd_info_entry *entry;
 };
 
