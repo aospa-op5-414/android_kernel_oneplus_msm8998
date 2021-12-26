@@ -239,21 +239,18 @@ int stmvl53l0_power_up_i2c(void *i2c_object, unsigned int *preset_flag)
 
 	/* actual power on */
 #ifndef STM_TEST
- #ifndef CONFIG_INPUT_STMVL53L0_SOMC_PARAMS
 	ret = regulator_set_voltage(data->vana, VL53L0_VDD_MIN, VL53L0_VDD_MAX);
 	if (ret < 0) {
 		vl53l0_errmsg("set_vol(%p) fail %d\n", data->vana, ret);
 		return ret;
 	}
- #endif /* INPUT_STMVL53L0_SOMC_PARAMS */
+
 	ret = regulator_enable(data->vana);
 
 	usleep_range(2950, 3000);
 	if (ret < 0) {
 		vl53l0_errmsg("reg enable(%p) failed.rc=%d\n", data->vana, ret);
- #ifndef CONFIG_INPUT_STMVL53L0_SOMC_PARAMS
 		return ret;
- #endif
 	}
 
 	if (!IS_ERR_OR_NULL(data->avdd)) {
