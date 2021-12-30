@@ -586,7 +586,7 @@ static inline void kgsl_process_sub_stats(struct kgsl_process_private *priv,
 	struct mm_struct *mm;
 
 	atomic64_sub(size, &priv->stats[type].cur);
-	pid_struct = find_get_pid(priv->pid);
+	pid_struct = find_get_pid(pid_nr(priv->pid));
 	if (pid_struct) {
 		task = get_pid_task(pid_struct, PIDTYPE_PID);
 		if (task) {
