@@ -248,6 +248,9 @@ schedtune_cpu_update(int cpu, u64 now)
 	u64 boost_ts;
 	int idx;
 
+	if (schedtune_interactive(check))
+		return;
+
 	schedtune_interactive(lock);
 
 	/* The root boost group is always active */
@@ -288,8 +291,6 @@ schedtune_boostgroup_update(int idx, int boost)
 	int cpu;
 	u64 now;
 
-	schedtune_interactive(lock);
-
 	/* Update per CPU boost groups */
 	for_each_possible_cpu(cpu) {
 		bg = &per_cpu(cpu_boost_groups, cpu);
@@ -325,8 +326,6 @@ schedtune_boostgroup_update(int idx, int boost)
 
 		trace_sched_tune_boostgroup_update(cpu, 0, bg->boost_max);
 	}
-
-	schedtune_interactive(unlock);
 
 	return 0;
 }
