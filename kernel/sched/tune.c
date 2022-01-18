@@ -568,9 +568,6 @@ int schedtune_task_boost(struct task_struct *p)
 	if (unlikely(!schedtune_initialized))
 		return 0;
 
-	if (schedtune_interactive(check_timeout))
-		return 0;
-
 	/* Get task boost value */
 	rcu_read_lock();
 	st = task_schedtune(p);
@@ -591,9 +588,6 @@ int schedtune_task_boost_rcu_locked(struct task_struct *p)
 	if (unlikely(!schedtune_initialized))
 		return 0;
 
-	if (schedtune_interactive(check_timeout))
-		return 0;
-
 	/* Get task boost value */
 	st = task_schedtune(p);
 	task_boost = st->boost;
@@ -607,9 +601,6 @@ int schedtune_prefer_idle(struct task_struct *p)
 	int prefer_idle;
 
 	if (unlikely(!schedtune_initialized))
-		return 0;
-
-	if (schedtune_interactive(check_timeout))
 		return 0;
 
 	/* Get prefer_idle value */
