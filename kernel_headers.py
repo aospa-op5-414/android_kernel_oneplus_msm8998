@@ -28,11 +28,9 @@ import sys
 
 def gen_version_h(verbose, gen_dir, version_makefile):
   """Generate linux/version.h
-
   Scan the version_makefile for the version info, and then generate
   linux/version.h in the gen_dir as done in kernel Makefile function
   filechk_version.h
-
   Args:
     verbose: Set True to print progress messages.
     gen_dir: Where to place the generated files.
@@ -116,7 +114,6 @@ def gen_version_h(verbose, gen_dir, version_makefile):
 
 def scan_arch_kbuild(verbose, arch_asm_kbuild, asm_generic_kbuild, arch_include_uapi):
   """Scan arch_asm_kbuild for generated headers.
-
   This function processes the Kbuild file to scan for three types of files that
   need to be generated. The first type are syscall generated headers, which are
   identified by adding to the generated-y make variable. The second type are
@@ -124,7 +121,6 @@ def scan_arch_kbuild(verbose, arch_asm_kbuild, asm_generic_kbuild, arch_include_
   asm-generic counterpart, and are identified by adding to the generic-y make
   variable. The third type are mandatory headers that should be present in the
   /usr/include/asm folder.
-
   Args:
     verbose: Set True to print progress messages.
     arch_asm_kbuild: The Kbuild file containing lists of headers to generate.
@@ -226,19 +222,16 @@ def scan_arch_kbuild(verbose, arch_asm_kbuild, asm_generic_kbuild, arch_include_
 def gen_arch_headers(
     verbose, gen_dir, arch_asm_kbuild, asm_generic_kbuild, arch_syscall_tool, arch_syscall_tbl, arch_include_uapi):
   """Process arch-specific and asm-generic uapi/asm/Kbuild to generate headers.
-
   The function consists of a call to scan_arch_kbuild followed by three loops.
   The first loop generates headers found and placed in the generated_list by
   scan_arch_kbuild. The second loop generates headers found and placed in the
   generic_list by the scan_arch_kbuild. The third loop generates headers found
   in mandatory_list by scan_arch_kbuild.
-
   The function does some parsing of file names and tool invocations. If that
   parsing fails for some reason (e.g., we don't know how to generate the
   header) or a tool invocation fails, then this function will count that as
   an error but keep processing. In the end, the function returns the number of
   errors encountered.
-
   Args:
     verbose: Set True to print progress messages.
     gen_dir: Where to place the generated files.
@@ -310,21 +303,19 @@ def gen_arch_headers(
   return error_count
 
 
-def run_headers_install(verbose, gen_dir, headers_install, prefix, h):
+def run_headers_install(verbose, gen_dir, headers_install, unifdef, prefix, h):
   """Process a header through the headers_install script.
-
   The headers_install script does some processing of a header so that it is
   appropriate for inclusion in a userland program. This function invokes that
   script for one header file.
-
   The input file is a header file found in the directory named by prefix. This
   function stips the prefix from the header to generate the name of the
   processed header.
-
   Args:
     verbose: Set True to print progress messages.
     gen_dir: Where to place the generated files.
     headers_install: The script that munges the header.
+    unifdef: The unifdef tool used by headers_install.
     prefix: The prefix to strip from h to generate the output filename.
     h: The input header to process.
   Return:
@@ -344,7 +335,9 @@ def run_headers_install(verbose, gen_dir, headers_install, prefix, h):
   if verbose:
     print('run_headers_install: cmd is %s' % cmd)
 
-  result = subprocess.call(cmd)
+  env = os.environ.copy()
+  env["LOC_UNIFDEF"] = unifdef
+  result = subprocess.call(['sh', headers_install, out_h_dirname, h_dirname, out_h_basename], env=env)
 
   if result != 0:
     print('error: run_headers_install: cmd %s failed %d' % (cmd, result))
@@ -355,13 +348,10 @@ def run_headers_install(verbose, gen_dir, headers_install, prefix, h):
 
 def glob_headers(prefix, rel_glob, excludes):
   """Recursively scan the a directory for headers.
-
   This function recursively scans the directory identified by prefix for
   headers. We don't yet have a new enough version of python3 to use the
   better glob function, so right now we assume the glob is '**/*.h'.
-
   The function filters out any files that match the items in excludes.
-
   Args:
     prefix: The directory to recursively scan for headers.
     rel_glob: The shell-style glob that identifies the header pattern.
@@ -399,10 +389,8 @@ def glob_headers(prefix, rel_glob, excludes):
 
 def find_out(verbose, module_dir, prefix, rel_glob, excludes, outs):
   """Build a list of outputs for the genrule that creates kernel headers.
-
   This function scans for headers in the source tree and produces a list of
   output (generated) headers.
-
   Args:
     verbose: Set True to print progress messages.
     module_dir: The root directory of the kernel source.
@@ -481,16 +469,14 @@ def find_out(verbose, module_dir, prefix, rel_glob, excludes, outs):
 
 def gen_blueprints(
     verbose, header_arch, gen_dir, arch_asm_kbuild, asm_generic_kbuild, module_dir,
-    rel_arch_asm_kbuild, rel_asm_generic_kbuild, arch_include_uapi):
+    rel_arch_asm_kbuild, rel_asm_generic_kbuild, arch_include_uapi, techpack_include_uapi):
   """Generate a blueprints file containing modules that invoke this script.
-
   This function generates a blueprints file that contains modules that
   invoke this script to generate kernel headers. We generate the blueprints
   file as needed, but we don't actually use the generated file. The blueprints
   file that we generate ends up in the out directory, and we can use it to
   detect if the checked-in version of the file (in the source directory) is out
   of date. This pattern occurs in the Android source tree in several places.
-
   Args:
     verbose: Set True to print progress messages.
     header_arch: The arch for which to generate headers.
@@ -511,6 +497,7 @@ def gen_blueprints(
 
   # Tools and tool files.
   headers_install_sh = 'headers_install.sh'
+  unifdef = 'unifdef'
   kernel_headers_py = 'kernel_headers.py'
   arm_syscall_tool = 'arch/arm/tools/syscallhdr.sh'
 
@@ -522,6 +509,7 @@ def gen_blueprints(
   arch_prefix = os.path.join('arch', header_arch, generic_prefix)
   generic_src = os.path.join(generic_prefix, rel_glob)
   arch_src = os.path.join(arch_prefix, rel_glob)
+  techpack_src = os.path.join('techpack/*',generic_prefix, '*',rel_glob)
 
   # Excluded sources, architecture specific.
   exclude_srcs = []
@@ -546,6 +534,8 @@ def gen_blueprints(
   error_count += find_out(
       verbose, module_dir, arch_prefix, rel_glob, None, arch_out)
 
+  techpack_out = [x.split('include/uapi/')[1] for x in techpack_include_uapi]
+
   if error_count != 0:
     return error_count
 
@@ -568,6 +558,7 @@ def gen_blueprints(
 
     f.write('    "%s",\n' % generic_src)
     f.write('    "%s",\n' % arch_src)
+    f.write('    "%s",\n' % techpack_src)
     f.write(']\n')
     f.write('\n')
 
@@ -615,6 +606,13 @@ def gen_blueprints(
       for h in arch_out:
         f.write('    "%s",\n' % h)
 
+    if techpack_out:
+      f.write('\n')
+      f.write('    // From %s\n' % techpack_src)
+      f.write('\n')
+      for h in techpack_out:
+        f.write('    "%s",\n' % h)
+
     f.write(']\n')
     f.write('\n')
 
@@ -637,6 +635,7 @@ def gen_blueprints(
     f.write('        "--gen_dir $(genDir) " +\n')
     f.write('        "--arch_asm_kbuild $(location %s) " +\n' % rel_arch_asm_kbuild)
     f.write('        "--arch_include_uapi $(locations %s) " +\n' % arch_src)
+    f.write('        "--techpack_include_uapi $(locations %s) " +\n' % techpack_src)
     f.write('        "--asm_generic_kbuild $(location %s) " +\n' % rel_asm_generic_kbuild)
     f.write('        "blueprints " +\n')
     f.write('        "# $(in)",\n')
@@ -646,7 +645,10 @@ def gen_blueprints(
 
     f.write('genrule {\n')
     f.write('    name: "qti_generate_kernel_headers_%s",\n' % header_arch)
-    f.write('    tools: ["%s"],\n' % headers_install_sh)
+    f.write('    tools: [\n')
+    f.write('        "%s",\n' % headers_install_sh)
+    f.write('        "%s",\n' % unifdef)
+    f.write('    ],\n')
     f.write('    tool_files: [\n')
     f.write('        "%s",\n' % kernel_headers_py)
 
@@ -668,6 +670,7 @@ def gen_blueprints(
     f.write('        "--gen_dir $(genDir) " +\n')
     f.write('        "--arch_asm_kbuild $(location %s) " +\n' % rel_arch_asm_kbuild)
     f.write('        "--arch_include_uapi $(locations %s) " +\n' % arch_src)
+    f.write('        "--techpack_include_uapi $(locations %s) " +\n' % techpack_src)
     f.write('        "--asm_generic_kbuild $(location %s) " +\n' % rel_asm_generic_kbuild)
     f.write('        "headers " +\n')
     f.write('        "--old_gen_headers_bp $(location %s) " +\n' % old_gen_headers_bp)
@@ -679,6 +682,7 @@ def gen_blueprints(
       f.write('        "--arch_syscall_tbl $(location %s) " +\n' % arm_syscall_tbl)
 
     f.write('        "--headers_install $(location %s) " +\n' % headers_install_sh)
+    f.write('        "--unifdef $(location %s) " +\n' % unifdef)
     f.write('        "--include_uapi $(locations %s)",\n' % generic_src)
     f.write('    out: ["linux/version.h"] + gen_headers_out_%s,\n' % header_arch)
     f.write('}\n')
@@ -733,15 +737,13 @@ def headers_diff(old_file, new_file):
 def gen_headers(
     verbose, header_arch, gen_dir, arch_asm_kbuild, asm_generic_kbuild, module_dir,
     old_gen_headers_bp, new_gen_headers_bp, version_makefile,
-    arch_syscall_tool, arch_syscall_tbl, headers_install, include_uapi,
-    arch_include_uapi):
+    arch_syscall_tool, arch_syscall_tbl, headers_install, unifdef, include_uapi,
+    arch_include_uapi, techpack_include_uapi):
   """Generate the kernel headers.
-
   This script generates the version.h file, the arch-specific headers including
   syscall-related generated files and wrappers around generic files, and uses
-  the headers_install tool to process other generic uapi and arch-specific uapi
+  the headers_install tool to process other generic uapi and arch-specifc uapi
   files.
-
   Args:
     verbose: Set True to print progress messages.
     header_arch: The arch for which to generate headers.
@@ -755,6 +757,7 @@ def gen_headers(
     arch_syscall_tool: The arch script that generates syscall headers.
     arch_syscall_tbl: The arch script that defines syscall vectors.
     headers_install: The headers_install tool to process input headers.
+    unifdef: The unifdef tool used by headers_install.
     include_uapi: The list of include/uapi header files.
     arch_include_uapi: The list of arch/<arch>/include/uapi header files.
   Return:
@@ -782,17 +785,68 @@ def gen_headers(
 
   for h in include_uapi:
     if not run_headers_install(
-        verbose, gen_dir, headers_install,
+        verbose, gen_dir, headers_install, unifdef,
         uapi_include_prefix, h):
       error_count += 1
 
   for h in arch_include_uapi:
     if not run_headers_install(
-        verbose, gen_dir, headers_install,
+        verbose, gen_dir, headers_install, unifdef,
         arch_uapi_include_prefix, h):
       error_count += 1
 
+  for h in techpack_include_uapi:
+    techpack_uapi_include_prefix = os.path.join(h.split('/include/uapi')[0], 'include', 'uapi') + os.sep
+    if not run_headers_install(
+        verbose, gen_dir, headers_install, unifdef,
+        techpack_uapi_include_prefix, h):
+      error_count += 1
+
   return error_count
+
+def extract_techpack_uapi_headers(verbose, module_dir):
+
+  """EXtract list of uapi headers from techpack/* directories. We need to export
+     these headers to userspace.
+  Args:
+      verbose: Verbose option is provided to script
+      module_dir: Base directory
+  Returs:
+      List of uapi headers
+  """
+
+  techpack_subdir = []
+  techpack_dir = os.path.join(module_dir,'techpack')
+  techpack_uapi = []
+  techpack_uapi_sub = []
+
+  #get list of techpack directories under techpack/
+  if os.path.isdir(techpack_dir):
+    items = sorted(os.listdir(techpack_dir))
+    for x in items:
+      p = os.path.join(techpack_dir, x)
+      if os.path.isdir(p):
+        techpack_subdir.append(p)
+
+  #Print list of subdirs obtained
+  if (verbose):
+    for x in techpack_subdir:
+      print(x)
+
+  #For every subdirectory get list of .h files under include/uapi and append to techpack_uapi list
+  for x in techpack_subdir:
+    techpack_uapi_path = os.path.join(x, 'include/uapi')
+    if (os.path.isdir(techpack_uapi_path)):
+      techpack_uapi_sub = []
+      find_out(verbose, x, 'include/uapi', '**/*.h', None, techpack_uapi_sub)
+      tmp = [os.path.join(techpack_uapi_path, y) for y in techpack_uapi_sub]
+      techpack_uapi = techpack_uapi + tmp
+
+  if (verbose):
+    for x in techpack_uapi:
+      print(x)
+
+  return techpack_uapi
 
 def main():
   """Parse command line arguments and perform top level control."""
@@ -828,6 +882,11 @@ def main():
       required=True,
       nargs='*',
       help='The list of arch/<arch>/include/uapi header files.')
+  parser.add_argument(
+      '--techpack_include_uapi',
+      required=True,
+      nargs='*',
+      help='The list of techpack/*/include/uapi header files.')
 
   # The modes.
 
@@ -866,6 +925,10 @@ def main():
       required=True,
       help='The headers_install tool to process input headers.')
   parser_headers.add_argument(
+      '--unifdef',
+      required=True,
+      help='The unifdef tool used by headers_install.')
+  parser_headers.add_argument(
       '--include_uapi',
       required=True,
       nargs='*',
@@ -899,10 +962,11 @@ def main():
   if args.verbose:
     print('module_dir [%s]' % module_dir)
 
+
   if args.mode == 'blueprints':
     return gen_blueprints(
         args.verbose, args.header_arch, args.gen_dir, args.arch_asm_kbuild,
-        args.asm_generic_kbuild, module_dir, rel_arch_asm_kbuild, rel_asm_generic_kbuild, args.arch_include_uapi)
+        args.asm_generic_kbuild, module_dir, rel_arch_asm_kbuild, rel_asm_generic_kbuild, args.arch_include_uapi, args.techpack_include_uapi)
 
   if args.mode == 'headers':
     if args.verbose:
@@ -912,12 +976,14 @@ def main():
       print('arch_syscall_tool [%s]' % args.arch_syscall_tool)
       print('arch_syscall_tbl [%s]' % args.arch_syscall_tbl)
       print('headers_install [%s]' % args.headers_install)
+      print('unifdef [%s]' % args.unifdef)
 
     return gen_headers(
         args.verbose, args.header_arch, args.gen_dir, args.arch_asm_kbuild,
         args.asm_generic_kbuild, module_dir, args.old_gen_headers_bp, args.new_gen_headers_bp,
         args.version_makefile, args.arch_syscall_tool, args.arch_syscall_tbl,
-        args.headers_install, args.include_uapi, args.arch_include_uapi)
+        args.headers_install, args.unifdef, args.include_uapi, args.arch_include_uapi,
+        args.techpack_include_uapi)
 
   print('error: unknown mode: %s' % args.mode)
   return 1

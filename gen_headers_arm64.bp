@@ -7,6 +7,7 @@ gen_headers_srcs_arm64 = [
     "Makefile",
     "include/uapi/**/*.h",
     "arch/arm64/include/uapi/**/*.h",
+    "techpack/*/include/uapi/*/**/*.h",
 ]
 
 gen_headers_exclude_srcs_arm64 = [
@@ -142,7 +143,6 @@ gen_headers_out_arm64 = [
     "linux/bcache.h",
     "linux/bcm933xx_hcs.h",
     "linux/bfs_fs.h",
-    "linux/bgcom_interface.h",
     "linux/binfmts.h",
     "linux/blkpg.h",
     "linux/blktrace_api.h",
@@ -218,10 +218,8 @@ gen_headers_out_arm64 = [
     "linux/flat.h",
     "linux/fou.h",
     "linux/fs.h",
-    "linux/fscrypt.h",
     "linux/fsl_hypervisor.h",
     "linux/fsmap.h",
-    "linux/fsverity.h",
     "linux/fuse.h",
     "linux/futex.h",
     "linux/gameport.h",
@@ -239,7 +237,6 @@ gen_headers_out_arm64 = [
     "linux/hdlc.h",
     "linux/hdlcdrv.h",
     "linux/hdreg.h",
-    "linux/hgsl.h",
     "linux/hid.h",
     "linux/hiddev.h",
     "linux/hidraw.h",
@@ -333,6 +330,7 @@ gen_headers_out_arm64 = [
     "linux/kernelcapi.h",
     "linux/kexec.h",
     "linux/keyboard.h",
+    "linux/keychord.h",
     "linux/keyctl.h",
     "linux/kfd_ioctl.h",
     "linux/kvm.h",
@@ -391,6 +389,7 @@ gen_headers_out_arm64 = [
     "linux/ncp_fs.h",
     "linux/ncp_mount.h",
     "linux/ncp_no.h",
+    "linux/ncsi.h",
     "linux/ndctl.h",
     "linux/neighbour.h",
     "linux/net.h",
@@ -427,7 +426,6 @@ gen_headers_out_arm64 = [
     "linux/nvme_ioctl.h",
     "linux/nvram.h",
     "linux/okl4-link-shbuf.h",
-    "linux/okl4-vipc.h",
     "linux/omap3isp.h",
     "linux/omapfb.h",
     "linux/oom.h",
@@ -545,7 +543,6 @@ gen_headers_out_arm64 = [
     "linux/synclink.h",
     "linux/sysctl.h",
     "linux/sysinfo.h",
-    "linux/sysstats.h",
     "linux/target_core_user.h",
     "linux/taskstats.h",
     "linux/tcp.h",
@@ -607,7 +604,6 @@ gen_headers_out_arm64 = [
     "linux/virtio_mmio.h",
     "linux/virtio_net.h",
     "linux/virtio_pci.h",
-    "linux/virtio_pmem.h",
     "linux/virtio_ring.h",
     "linux/virtio_rng.h",
     "linux/virtio_scsi.h",
@@ -629,8 +625,6 @@ gen_headers_out_arm64 = [
     "linux/xilinx-v4l2-controls.h",
     "linux/zorro.h",
     "linux/zorro_ids.h",
-    "media/ais_isp.h",
-    "media/ais_sensor.h",
     "media/cam_cpas.h",
     "media/cam_defs.h",
     "media/cam_fd.h",
@@ -922,7 +916,6 @@ gen_headers_out_arm64 = [
     "linux/usb/g_printer.h",
     "linux/usb/gadgetfs.h",
     "linux/usb/midi.h",
-    "linux/usb/raw_gadget.h",
     "linux/usb/tmc.h",
     "linux/usb/usb_ctrl_qti.h",
     "linux/usb/video.h",
@@ -939,7 +932,6 @@ gen_headers_out_arm64 = [
     "linux/netfilter/ipset/ip_set_bitmap.h",
     "linux/netfilter/ipset/ip_set_hash.h",
     "linux/netfilter/ipset/ip_set_list.h",
-     "linux/msm_eth.h",
 
     // From arch/arm64/include/uapi/**/*.h
 
@@ -963,6 +955,7 @@ gen_headers_out_arm64 = [
     "asm/unistd.h",
 
     // From techpack/*/include/uapi/*/**/*.h
+
     "linux/avtimer.h",
     "linux/mfd/wcd9xxx/wcd9xxx_registers.h",
     "linux/mfd/wcd9xxx/wcd9320_registers.h",
@@ -983,7 +976,6 @@ gen_headers_out_arm64 = [
     "linux/msm_audio_voicememo.h",
     "linux/msm_audio_wma.h",
     "linux/msm_audio_wmapro.h",
-    "linux/wcd-spi-ac-params.h",
     "sound/audio_effects.h",
     "sound/audio_slimslave.h",
     "sound/devdep_params.h",
@@ -1008,6 +1000,7 @@ genrule {
         "--gen_dir $(genDir) " +
         "--arch_asm_kbuild $(location arch/arm64/include/uapi/asm/Kbuild) " +
         "--arch_include_uapi $(locations arch/arm64/include/uapi/**/*.h) " +
+        "--techpack_include_uapi $(locations techpack/*/include/uapi/*/**/*.h) " +
         "--asm_generic_kbuild $(location include/uapi/asm-generic/Kbuild.asm) " +
         "blueprints " +
         "# $(in)",
@@ -1016,7 +1009,10 @@ genrule {
 
 genrule {
     name: "qti_generate_kernel_headers_arm64",
-    tools: ["headers_install.sh"],
+    tools: [
+        "headers_install.sh",
+        "unifdef",
+    ],
     tool_files: [
         "kernel_headers.py",
     ],
@@ -1031,12 +1027,14 @@ genrule {
         "--gen_dir $(genDir) " +
         "--arch_asm_kbuild $(location arch/arm64/include/uapi/asm/Kbuild) " +
         "--arch_include_uapi $(locations arch/arm64/include/uapi/**/*.h) " +
+        "--techpack_include_uapi $(locations techpack/*/include/uapi/*/**/*.h) " +
         "--asm_generic_kbuild $(location include/uapi/asm-generic/Kbuild.asm) " +
         "headers " +
         "--old_gen_headers_bp $(location gen_headers_arm64.bp) " +
         "--new_gen_headers_bp $(location :qti_generate_gen_headers_arm64) " +
         "--version_makefile $(location Makefile) " +
         "--headers_install $(location headers_install.sh) " +
+        "--unifdef $(location unifdef) " +
         "--include_uapi $(locations include/uapi/**/*.h)",
     out: ["linux/version.h"] + gen_headers_out_arm64,
 }
