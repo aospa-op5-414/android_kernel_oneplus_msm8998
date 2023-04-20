@@ -1371,8 +1371,8 @@ static struct clk_rcg2 dp_gtc_clk_src = {
 };
 
 static const struct freq_tbl ftbl_esc_clk_src[] = {
-        F(19200000, P_BI_TCXO, 1, 0, 0),
-        { }
+	F(  19200000,      P_BI_TCXO,         1,    0,     0),
+	{ }
 };
 
 
@@ -1440,7 +1440,7 @@ static struct clk_rcg2 hdmi_clk_src = {
 		.parent_names = mmcc_parent_names_gcc_1,
 		.num_parents = ARRAY_SIZE(mmcc_parent_names_gcc_1),
 		.ops = &clk_rcg2_ops,
-		VDD_DIG_FMAX_MAP2(LOWER, 19200000, NOMINAL, 19200000),
+		VDD_DIG_FMAX_MAP1(LOWER, 19200000),
 	},
 };
 
@@ -1459,7 +1459,7 @@ static struct clk_rcg2 vsync_clk_src = {
 		.parent_names = disp_cc_parent_names_2,
 		.num_parents = ARRAY_SIZE(disp_cc_parent_names_2),
 		.ops = &clk_rcg2_ops,
-		VDD_DIG_FMAX_MAP2(LOWER, 19200000, NOMINAL, 19200000),
+		VDD_DIG_FMAX_MAP1(LOWER, 19200000),
 	},
 };
 
@@ -1478,7 +1478,7 @@ static struct clk_rcg2 dp_aux_clk_src = {
 		.parent_names = disp_cc_parent_names_2,
 		.num_parents = ARRAY_SIZE(disp_cc_parent_names_2),
 		.ops = &clk_rcg2_ops,
-		VDD_DIG_FMAX_MAP2(LOWER, 19200000, NOMINAL, 19200000),
+		VDD_DIG_FMAX_MAP1(LOWER, 19200000),
 	},
 };
 
