@@ -886,19 +886,6 @@
 	};
 };
 
-&rpm_bus {
-	rpm-regulator-ldoa25 {
-		pm8998_l25: regulator-l25 {
-			regulator-min-microvolt = <3312000>;
-		};
-
-		pm8998_l25_pin_ctrl: regulator-l25-pin-ctrl {
-			regulator-min-microvolt = <3312000>;
-		};
-	};
-};
-
-
 /*Anderson-Config_UARTPIN_as_GPIO*[*/
 &soc {
 	tlmm: pinctrl@03400000 {
