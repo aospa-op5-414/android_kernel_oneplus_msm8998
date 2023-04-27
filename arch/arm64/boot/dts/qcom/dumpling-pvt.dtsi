@@ -1108,17 +1108,3 @@
 		status = "ok";
 	};
 };
-
-/* Used by goodix_fp */
-&wsa_spkr_sd1 {
-	pinctrl-names = <>;
-	pinctrl-0 = <>;
-	pinctrl-1 = <>;
-};
-
-/* Used by mdss_dsi0 */
-&wsa_spkr_sd2 {
-	pinctrl-names = <>;
-	pinctrl-0 = <>;
-	pinctrl-1 = <>;
-};

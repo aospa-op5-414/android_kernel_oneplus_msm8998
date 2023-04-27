@@ -635,6 +635,11 @@
 		qcom,cdc-micbias2-mv = <2700>;
 		qcom,cdc-micbias3-mv = <1800>;
 		qcom,cdc-micbias4-mv = <1800>;
+
+		/* These nodes' GPIOs are taken by goodix_fp and mdss_dsi0 */
+		/delete-node/ msm_cdc_pinctrll;
+		/delete-node/ msm_cdc_pinctrlr;		
+		/delete-node/ swr_master;
 	};
 };
 
