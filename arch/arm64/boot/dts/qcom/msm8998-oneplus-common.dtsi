@@ -786,11 +786,14 @@
 		nxp,irq_gpio = <&tlmm 92 0x00>;
 		nxp,dwld_en = <&tlmm 93 0x00>;
 		nxp,ven = <&tlmm 12 0x01>;
+		nxp,clk_req = <&pm8998_gpios 21 0x00>;
 		nxp,pvdd_en = <&tlmm 37 0x00>;
 		clocks = <&clock_rpmcc RPM_SMD_LN_BB_CLK3>;
 		clock-names = "nfc_clk";
 		pinctrl-names = "pn547-active", "pn547-inactive";
-		pinctrl-0 = <&nfc_int_active &nfc_enable_active>;
+		pinctrl-0 = <&nfc_int_active 
+				&nfc_enable_active
+				&nfc_clk_default>;
 		pinctrl-1 = <&nfc_int_suspend &nfc_enable_suspend>;
 	};
 };
