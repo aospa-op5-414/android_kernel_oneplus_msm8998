@@ -185,11 +185,28 @@
 		compatible = "oem,force_serial";
 	};
 
+	pinctrl@03400000 {
+		uart_console_deactive: uart_console_deactive {
+			mux {
+				pins = "gpio4", "gpio5";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio4", "gpio5";
+				drive-strength = <2>;
+				bias-pull-down;
+			};
+		};
+	};
+
 	oem_serial_pinctrl {
 		status = "disabled";
 		compatible = "oem,oem_serial_pinctrl";
-		pinctrl-names = "uart_pinctrl_active";
+		pinctrl-names = "uart_pinctrl_active",
+				"uart_pinctrl_deactive";
 		pinctrl-0 = <&uart_console_active>;
+		pinctrl-1 = <&uart_console_deactive>;
 	};
 };
 
@@ -800,9 +817,9 @@
 };
 
 &uartblsp2dm1 {
-	pinctrl-names = "uart_active";
+	pinctrl-names = "uart_active", "uart_deactive";
 	pinctrl-0 = <&uart_console_active>;
-	status = "okay";
+	pinctrl-1 = <&uart_console_deactive>;
 };
 
 &soc {
