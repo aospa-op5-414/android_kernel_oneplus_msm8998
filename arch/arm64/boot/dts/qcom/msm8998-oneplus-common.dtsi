@@ -181,10 +181,6 @@
 					0x0f 0x240>;
 	};
 
-	force_enable_serial {
-		compatible = "oem,force_serial";
-	};
-
 	pinctrl@03400000 {
 		uart_console_deactive: uart_console_deactive {
 			mux {
@@ -198,15 +194,6 @@
 				bias-pull-down;
 			};
 		};
-	};
-
-	oem_serial_pinctrl {
-		status = "disabled";
-		compatible = "oem,oem_serial_pinctrl";
-		pinctrl-names = "uart_pinctrl_active",
-				"uart_pinctrl_deactive";
-		pinctrl-0 = <&uart_console_active>;
-		pinctrl-1 = <&uart_console_deactive>;
 	};
 };
 
