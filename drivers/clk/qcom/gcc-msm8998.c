@@ -46,7 +46,6 @@ static DEFINE_VDD_REGULATORS(vdd_dig_ao, VDD_DIG_NUM, 1, vdd_corner);
 
 enum {
 	P_BI_TCXO,
-	P_CORE_BI_PLL_TEST_SE,
 	P_GPLL0,
 	P_GPLL0_EARLY_DIV,
 	P_GPLL4,
@@ -68,13 +67,11 @@ static const char * const gcc_parent_names_1[] = {
 static const struct parent_map gcc_parent_map_1_ao[] = {
 	{ P_BI_TCXO, 0 },
 	{ P_GPLL0, 1 },
-	{ P_CORE_BI_PLL_TEST_SE, 7 },
 };
 
 static const char * const gcc_parent_names_1_ao[] = {
 	"bi_tcxo_ao",
 	"gpll0_ao",
-	"core_bi_pll_test_se",
 };
 
 static const struct parent_map gcc_parent_map_2[] = {
