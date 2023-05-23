@@ -15,8 +15,6 @@
 /* I/O */
 &soc {
 	pinctrl@03400000 {
-		disabled-pins = <0 1 2 3 81 82 83 84>;
-
 		/* Fingerprint */
 		/* GPIO_40 : FP_RESET_N */
 		fpc1020_reset_reset: reset {
@@ -76,14 +74,6 @@
 		synaptics,tx-rx-num = <17 30>;
 		synaptics,display-coords = <1080 1920>;
 	};
-};
-
-&mdss_dsi0 {
-	qcom,dsi-pref-prim-pan = <&dsi_samsung_s6e3fa5_1080p_cmd>;
-};
-
-&mdss_dsi1 {
-	/delete-property/ qcom,dsi-pref-prim-pan;
 };
 
 /* Audio */

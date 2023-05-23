@@ -93,6 +93,8 @@
 	};
 
 	pinctrl@03400000 {
+		disabled-pins = <0 1 2 3 81 82 83 84>;
+
 		tri_state_key_mux {
 			tri_state_key_active: tri_state_key_active {
 				mux {
@@ -545,6 +547,7 @@
 
 &mdss_dsi1 {
 	status = "disabled";
+	/delete-property/ qcom,dsi-pref-prim-pan;
 };
 
 &labibb {
