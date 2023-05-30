@@ -15,17 +15,20 @@
 
 #define GPU_PLL0_PLL		0
 #define GPU_PLL0_PLL_OUT_EVEN	1
-#define GPU_PLL0_PLL_OUT_ODD	2
-#define GFX3D_CLK_SRC		3
-#define RBBMTIMER_CLK_SRC	4
-#define GFX3D_ISENSE_CLK_SRC	5
-#define GPUCC_RBBMTIMER_CLK	6
-#define GPUCC_GFX3D_ISENSE_CLK	7
-#define GPUCC_GFX3D_CLK		8
+#define GFX3D_CLK_SRC		2
+#define GPUCC_GFX3D_CLK		3
 
+#define GPU_CX_BCR					0
+#define GPU_GX_BCR					1
 
 /* EARLY */
 #define GPUCC_XO		0
 #define RBCPR_CLK_SRC		1
 #define GPUCC_RBCPR_CLK		2
-	
+#define RBBMTIMER_CLK_SRC	3
+#define GPUCC_RBBMTIMER_CLK	4
+#define GFX3D_ISENSE_CLK_SRC	5
+#define GPUCC_GFX3D_ISENSE_CLK	6
+
+#define RBCPR_BCR					0
+#define GPU_ISENSE_BCR					1
