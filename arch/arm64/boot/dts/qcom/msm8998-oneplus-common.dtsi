@@ -787,6 +787,7 @@
 
 	pn5xx@28 {
 		compatible = "nxp,pn547";
+		nxp,dev_name = "nq-nci";
 		reg = <0x28>;
 		interrupt-parent = <&tlmm>;
 		interrupts = <92 0>;
