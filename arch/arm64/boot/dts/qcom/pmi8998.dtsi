@@ -773,32 +773,6 @@
 				type = "passive";
 			};
 		};
-		cooling-maps {
-			vbat_cpu4 {
-				trip = <&low_vbat>;
-				cooling-device =
-					<&CPU4 THERMAL_MAX_LIMIT
-						THERMAL_MAX_LIMIT>;
-			};
-			vbat_cpu5 {
-				trip = <&low_vbat>;
-				cooling-device =
-					<&CPU5 THERMAL_MAX_LIMIT
-						THERMAL_MAX_LIMIT>;
-			};
-			vbat_map6 {
-				trip = <&low_vbat>;
-				cooling-device =
-					<&CPU6 THERMAL_MAX_LIMIT
-						THERMAL_MAX_LIMIT>;
-			};
-			vbat_map7 {
-				trip = <&low_vbat>;
-				cooling-device =
-					<&CPU7 THERMAL_MAX_LIMIT
-						THERMAL_MAX_LIMIT>;
-			};
-		};
 	};
 
 	pmi8998_tz {
