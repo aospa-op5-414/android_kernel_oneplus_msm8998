@@ -224,6 +224,7 @@ gen_headers_out_arm = [
     "linux/fs.h",
     "linux/fsl_hypervisor.h",
     "linux/fsmap.h",
+    "linux/fsverity.h",
     "linux/fuse.h",
     "linux/futex.h",
     "linux/gameport.h",
