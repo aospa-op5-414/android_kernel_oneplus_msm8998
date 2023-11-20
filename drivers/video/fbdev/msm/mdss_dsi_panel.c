@@ -978,6 +978,11 @@ int mdss_dsi_panel_set_panel_mode(struct dsi_panel_cmds *on_cmd, struct dsi_pane
 	struct dsi_panel_cmds *cmd;
 	int ret = 0;
 
+	if (mdss_dsi_is_panel_on_lp(&ctrl->panel_data)) {
+		pr_err("Cannot change panel mode in DSI low power mode");
+		return -1;
+	}
+
 	mutex_lock(&ctrl->panel_mode_lock);
 	if (!ctrl->is_panel_on) {
 		mutex_unlock(&ctrl->panel_mode_lock);
