@@ -868,6 +868,11 @@ DEFINE_CLK_SMD_RPM_XO_BUFFER(msm8998, div_clk3, div_clk3_ao, 0xd);
 
 static DEFINE_CLK_BRANCH_VOTER(bi_tcxo_pil_spss_clk, bi_tcxo);
 
+#ifdef CONFIG_ONEPLUS_FASTCHG
+static DEFINE_CLK_VOTER(uart_cnoc_msmbus_a_clk, cnoc_a_clk, LONG_MAX);
+static DEFINE_CLK_VOTER(uart_snoc_msmbus_a_clk, snoc_a_clk, LONG_MAX);
+#endif
+
 static struct clk_hw *msm8998_clks[] = {
 	[RPM_SMD_XO_CLK_SRC]	= &msm8998_bi_tcxo.hw,
 	[RPM_SMD_XO_A_CLK_SRC]	= &msm8998_bi_tcxo_ao.hw,
@@ -935,6 +940,10 @@ static struct clk_hw *msm8998_clks[] = {
 	[SNOC_MSMBUS_CLK]	= &snoc_msmbus_clk.hw,
 	[SNOC_MSMBUS_A_CLK]	= &snoc_msmbus_a_clk.hw,
 	[CNOC_PERIPH_KEEPALIVE_A_CLK] = &cnoc_periph_keepalive_a_clk.hw,
+#ifdef CONFIG_ONEPLUS_FASTCHG
+	[UART_CNOC_MSMBUS_A_CLK]	= &uart_cnoc_msmbus_a_clk.hw,
+	[UART_SNOC_MSMBUS_A_CLK]	= &uart_snoc_msmbus_a_clk.hw,
+#endif
 	[CXO_SMD_DWC3_CLK]	= &bi_tcxo_dwc3_clk.hw,
 	[CXO_SMD_LPM_CLK]	= &bi_tcxo_lpm_clk.hw,
 	[CXO_SMD_OTG_CLK]	= &bi_tcxo_otg_clk.hw,

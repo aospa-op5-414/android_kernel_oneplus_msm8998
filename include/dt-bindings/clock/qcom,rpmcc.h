@@ -221,4 +221,7 @@
 #define CXO_SMD_WLAN_CLK			177
 #define CXO_SMD_PIL_SPSS_CLK			178
 
+#define UART_CNOC_MSMBUS_A_CLK			179
+#define UART_SNOC_MSMBUS_A_CLK			180
+
 #endif

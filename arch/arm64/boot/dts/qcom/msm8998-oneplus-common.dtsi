@@ -460,6 +460,9 @@
 				&ap_clk_suspend>;
 		pinctrl-2 = <&ap_data_active>;
 		pinctrl-3 = <&ap_data_suspend>;
+		clocks = <&clock_rpmcc UART_SNOC_MSMBUS_A_CLK>,
+			<&clock_rpmcc UART_CNOC_MSMBUS_A_CLK>;
+		clock-names = "snoc", "cnoc";
 	};
 };
 
