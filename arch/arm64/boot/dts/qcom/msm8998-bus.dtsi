@@ -99,8 +99,8 @@
 			qcom,base-name = "cnoc-base";
 			qcom,bus-type = <1>;
 			clock-names = "bus_clk", "bus_a_clk";
-			clocks = <&clock_rpmcc RPM_SMD_CNOC_CLK>,
-				<&clock_rpmcc RPM_SMD_CNOC_A_CLK>;
+			clocks = <&clock_rpmcc CNOC_MSMBUS_CLK>,
+				<&clock_rpmcc CNOC_MSMBUS_A_CLK>;
 		};
 
 		fab_cr_virt: fab-cr_virt {
@@ -165,8 +165,8 @@
 			qcom,qos-off = <4096>;
 			qcom,base-offset = <20480>;
 			clock-names = "bus_clk", "bus_a_clk";
-			clocks = <&clock_rpmcc RPM_SMD_SNOC_CLK>,
-				<&clock_rpmcc RPM_SMD_SNOC_A_CLK>;
+			clocks = <&clock_rpmcc SNOC_MSMBUS_CLK>,
+				<&clock_rpmcc SNOC_MSMBUS_A_CLK>;
 		};
 
 		fab_mnoc_ahb: fab-mnoc-ahb {
