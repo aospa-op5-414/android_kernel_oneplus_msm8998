@@ -19,6 +19,9 @@
 
 #include "pxlw-iris-settings.dtsi"
 
+/* Include thermal */
+#include "msm8998-oneplus-common-thermal.dtsi"
+
 /* Disable SMP2P Remote Debug for production */
 #include "msm-rdbg-disable.dtsi"
 
