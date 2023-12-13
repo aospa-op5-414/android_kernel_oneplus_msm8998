@@ -14,12 +14,12 @@
 #include <dt-bindings/thermal/thermal.h>
 
 &clock_cpu {
-	lmh_dcvs0: qcom,limits-dcvs@0 {
+	lmh_dcvs0: qcom,limits-dcvs@179ce800 {
 		qcom,affinity = <0>;
 		#thermal-sensor-cells = <0>;
 	};
 
-	lmh_dcvs1: qcom,limits-dcvs@1 {
+	lmh_dcvs1: qcom,limits-dcvs@179cc800 {
 		qcom,affinity = <1>;
 		#thermal-sensor-cells = <0>;
 	};
