@@ -419,6 +419,7 @@ const struct i2c_device_id *id)
 	optimize_data.workqueue = create_workqueue("tpd_probe_optimize");
 
 	INIT_DELAYED_WORK(&(optimize_data.work), synaptics_ts_probe_func);
+	preempt_disable();
 	TPD_ERR("before on cpu [%d]\n", smp_processor_id());
 
 	for_each_possible_cpu(i) {
@@ -428,6 +429,7 @@ const struct i2c_device_id *id)
 		if (cpu_online(i) && (i != smp_processor_id()))
 			break;
 	}
+	preempt_enable();
 	queue_delayed_work_on(i, optimize_data.workqueue,
 	&(optimize_data.work), msecs_to_jiffies(300));
     /*add by lifeng@bsp 2015-12-10 for only one cpu on line*/
