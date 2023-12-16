@@ -144,6 +144,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			#io-channel-cells = <1>;
+			io-channel-ranges;
 
 			ref_gnd {
 				label = "ref_gnd";
@@ -164,17 +165,15 @@
 			};
 		};
 
-		pm8998_adc_tm: vadc@3400 {
-			compatible = "qcom,qpnp-adc-tm-hc";
+		pm8998_adc_tm: vadc@3400 {	
+			compatible = "qcom,adc-tm5-iio";
 			reg = <0x3400 0x100>;
-			#address-cells = <1>;
-			#size-cells = <0>;
 			interrupts = <0x0 0x34 0x0 IRQ_TYPE_EDGE_RISING>;
 			interrupt-names = "eoc-int-en-set";
-			qcom,adc-vdd-reference = <1875>;
-			qcom,adc_tm-vadc = <&pm8998_vadc>;
-			qcom,decimation = <0>;
-			qcom,fast-avg-setup = <0>;
+			qcom,decimation = <250>;
+			qcom,avg-samples = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
 			#thermal-sensor-cells = <1>;
 		};
 

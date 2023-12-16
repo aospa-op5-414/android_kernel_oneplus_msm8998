@@ -2384,13 +2384,6 @@
 		clock-names = "iface_clk";
 	};
 
-	lmh_lite: qcom,lmh {
-		compatible = "qcom,lmh_v1";
-		interrupts = <GIC_SPI 134 IRQ_TYPE_LEVEL_HIGH>;
-		#thermal-sensor-cells = <1>;
-		status="disabled";
-	};
-
 	pcie0: qcom,pcie@01c00000 {
 		compatible = "qcom,pci-msm";
 		cell-index = <0>;
@@ -3219,15 +3212,6 @@
 
 &lab_regulator {
 	qcom,qpnp-lab-ps-threshold = <20>;
-};
-
-/*
-&pm8998_vadc {
-	qcom,adc-bit-resolution = <15>;
-};
-*/
-&pm8998_adc_tm {
-	qcom,adc-bit-resolution = <15>;
 };
 
 &pm8998_div_clk1 {

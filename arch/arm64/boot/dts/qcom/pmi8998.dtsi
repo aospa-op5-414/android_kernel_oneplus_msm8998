@@ -41,7 +41,7 @@
 			compatible = "qcom,spmi-temp-alarm";
 			reg = <0x2400 0x100>;
 			interrupts = <0x2 0x24 0x0 IRQ_TYPE_EDGE_RISING>;
-			io-channels = <&pmi8998_rradc 7>;
+			io-channels = <&pm8998_vadc ADC_DIE_TEMP>;
 			io-channel-names = "thermal";
 			#thermal-sensor-cells = <0>;
 		};
@@ -787,12 +787,12 @@
 				hysteresis = <0>;
 				type = "passive";
 			};
-			 pmi8998_trip1: pmi8998-trip1 {
+			pmi8998_trip1: pmi8998-trip1 {
 				temperature = <125000>;
 				hysteresis = <0>;
 				type = "passive";
 			};
-			 pmi8998_trip2: pmi8998-trip2 {
+			pmi8998_trip2: pmi8998-trip2 {
 				temperature = <145000>;
 				hysteresis = <0>;
 				type = "passive";
