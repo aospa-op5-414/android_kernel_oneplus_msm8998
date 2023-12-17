@@ -3206,26 +3206,6 @@
 #include "msm8998-sde.dtsi"
 #include "msm-smb138x.dtsi"
 
-&pmi8998_pdphy {
-	vbus-supply = <&smb2_vbus>;
-};
-
-&lab_regulator {
-	qcom,qpnp-lab-ps-threshold = <20>;
-};
-
-&pm8998_div_clk1 {
-	status = "disabled";
-};
-
-&pm8998_div_clk2 {
-	status = "disabled";
-};
-
-&pm8998_div_clk3 {
-	status = "disabled";
-};
-
 &spmi_bus {
 	qcom,pm8998@0 {
 		qcom,power-on@800 {
