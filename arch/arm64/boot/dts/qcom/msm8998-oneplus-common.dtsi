@@ -687,16 +687,6 @@
 
 /* External Thermistors */
 &pm8998_vadc {
-	ufs_therm {
-		label = "ufs_therm";
-		reg = <ADC_AMUX_THM2_PU2>;
-		qcom,decimation = <1024>;
-		qcom,pre-scaling = <1 1>;
-		qcom,ratiometric;
-		qcom,hw-settle-time = <200>;
-		qcom,avg-samples = <1>;
-	};
-
 	pa_therm0 {
 		label = "pa_therm0";
 		reg = <ADC_AMUX_THM3_PU2>;
@@ -706,41 +696,16 @@
 		qcom,hw-settle-time = <200>;
 		qcom,avg-samples = <1>;
 	};
-
-	pa_therm1 {
-		label = "pa_therm1";
-		reg = <ADC_AMUX_THM4_PU2>;
-		qcom,decimation = <1024>;
-		qcom,pre-scaling = <1 1>;
-		qcom,ratiometric;
-		qcom,hw-settle-time = <200>;
-		qcom,avg-samples = <1>;
-	};
 };
 
 &pm8998_adc_tm {
-	io-channels = <&pm8998_vadc ADC_VPH_PWR>,
-		<&pm8998_vadc ADC_XO_THERM_PU2>,
+	io-channels = <&pm8998_vadc ADC_XO_THERM_PU2>,
 		<&pm8998_vadc ADC_AMUX_THM1_PU2>,
 		<&pm8998_vadc ADC_AMUX_THM5_PU2>,
-		<&pm8998_vadc ADC_AMUX_THM2_PU2>,
-		<&pm8998_vadc ADC_AMUX_THM3_PU2>,
-		<&pm8998_vadc ADC_AMUX_THM4_PU2>;
-
-	ufs_therm {
-		reg = <ADC_AMUX_THM2_PU2>;
-		qcom,ratiometric;
-		qcom,hw-settle-time = <200>;
-	};
+		<&pm8998_vadc ADC_AMUX_THM3_PU2>;
 
 	pa_therm0 {
 		reg = <ADC_AMUX_THM3_PU2>;
-		qcom,ratiometric;
-		qcom,hw-settle-time = <200>;
-	};
-
-	pa_therm1 {
-		reg = <ADC_AMUX_THM4_PU2>;
 		qcom,ratiometric;
 		qcom,hw-settle-time = <200>;
 	};
