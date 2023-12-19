@@ -105,6 +105,7 @@ struct limits_dcvs_hw {
 	struct list_head list;
 	bool is_irq_enabled;
 	bool is_plat_mit_disabled;
+	bool is_legacy;
 	struct mutex access_lock;
 	struct __limits_cdev_data *cdev_data;
 	uint32_t cdev_registered;
@@ -456,10 +457,18 @@ static void register_cooling_device(struct work_struct *work)
 			hw->cdev_data[idx].min_freq = 0;
 
 			if (!hw->is_plat_mit_disabled) {
-				cpumask_set_cpu(cpu, &cpu_mask);
-				hw->cdev_data[idx].cdev =
-					cpufreq_platform_cooling_register(
-							&cpu_mask, &cd_ops);
+				if (hw->is_legacy) {
+					/* Register platform cooling per cluster for legacy */
+					hw->cdev_data[idx].cdev = (idx == 0) ?
+						cpufreq_platform_cooling_register(
+								&hw->core_map, &cd_ops)
+						: hw->cdev_data[0].cdev;
+				} else {
+					cpumask_set_cpu(cpu, &cpu_mask);
+					hw->cdev_data[idx].cdev =
+						cpufreq_platform_cooling_register(
+								&cpu_mask, &cd_ops);
+				}
 			} else {
 				cpu_node = of_cpu_device_node_get(cpu);
 				if (WARN_ON(!cpu_node)) {
@@ -642,7 +651,8 @@ static int limits_dcvs_probe(struct platform_device *pdev)
 				"qcom,plat-mitigation-disable");
 
 	/* Check legcay LMH HW enablement is needed or not */
-	if (of_property_read_bool(dn, "qcom,legacy-lmh-enable")) {
+	hw->is_legacy = of_property_read_bool(dn, "qcom,legacy-lmh-enable");
+	if (hw->is_legacy) {
 		/* Enable the thermal algorithm early */
 		ret = limits_dcvs_write(hw->affinity, LIMITS_SUB_FN_THERMAL,
 			 LIMITS_ALGO_MODE_ENABLE, 1, 0, 0);
