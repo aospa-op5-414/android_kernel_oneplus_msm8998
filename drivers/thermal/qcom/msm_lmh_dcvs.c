@@ -457,18 +457,19 @@ static void register_cooling_device(struct work_struct *work)
 			hw->cdev_data[idx].min_freq = 0;
 
 			if (!hw->is_plat_mit_disabled) {
-				if (hw->is_legacy) {
-					/* Register platform cooling per cluster for legacy */
-					hw->cdev_data[idx].cdev = (idx == 0) ?
-						cpufreq_platform_cooling_register(
-								&hw->core_map, &cd_ops)
-						: hw->cdev_data[0].cdev;
-				} else {
+				/* 
+				 * For legacy, each cluster's first
+				 * CPU must be registered for shared 
+				 * cpufreq platform cooling.
+				 */
+				if (hw->is_legacy && (idx == 0))
+					cpumask_copy(&cpu_mask, &hw->core_map);
+				else
 					cpumask_set_cpu(cpu, &cpu_mask);
-					hw->cdev_data[idx].cdev =
-						cpufreq_platform_cooling_register(
-								&cpu_mask, &cd_ops);
-				}
+
+				hw->cdev_data[idx].cdev =
+					cpufreq_platform_cooling_register(
+							&cpu_mask, &cd_ops);
 			} else {
 				cpu_node = of_cpu_device_node_get(cpu);
 				if (WARN_ON(!cpu_node)) {
