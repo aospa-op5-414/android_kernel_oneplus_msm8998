@@ -163,3 +163,7 @@
 			"SpkrRight IN", "SPK2 OUT";
 	};
 };
+
+&pmi8998_haptics {
+	qcom,vmax-mv = <1800>;
+};
