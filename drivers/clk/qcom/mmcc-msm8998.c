@@ -2585,6 +2585,7 @@ static struct clk_branch mmss_mdss_axi_clk = {
 		.hw.init = &(struct clk_init_data) {
 			.name = "mmss_mdss_axi_clk",
 			.ops = &clk_branch2_ops,
+			.flags = CLK_ENABLE_HAND_OFF,
 		},
 	},
 };
@@ -2929,6 +2930,7 @@ static struct clk_branch mmss_mdss_mdp_lut_clk = {
 			.num_parents = 1,
 			.flags = CLK_SET_RATE_PARENT,
 			.ops = &clk_branch2_ops,
+			.flags = CLK_ENABLE_HAND_OFF,
 		},
 	},
 };
@@ -2999,7 +3001,7 @@ static struct clk_branch mmss_mdss_vsync_clk = {
 				"vsync_clk_src",
 			},
 			.num_parents = 1,
-			.flags = CLK_SET_RATE_PARENT,
+			.flags = CLK_SET_RATE_PARENT | CLK_ENABLE_HAND_OFF,
 			.ops = &clk_branch2_ops,
 		},
 	},
@@ -3017,7 +3019,7 @@ static struct clk_branch mmss_mnoc_ahb_clk = {
 				"ahb_clk_src",
 			},
 			.num_parents = 1,
-			.flags = CLK_SET_RATE_PARENT,
+			.flags = CLK_SET_RATE_PARENT | CLK_ENABLE_HAND_OFF,
 			.ops = &clk_branch2_ops,
 		},
 	},
